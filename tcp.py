@@ -42,7 +42,6 @@ class TCPSocket(object):
         send(ack_pkt, verbose=self.verbose)
 
     def handle(self, packet):
-        print "Handling packet..."
         print packet.summary()
 
     def send(self, payload):
@@ -53,7 +52,13 @@ class TCPSocket(object):
         return ""
 
 def dispatch(pkt):
-    print pkt.summary()
+    if not isinstance(pkt.payload.payload, TCP):
+        return
+    ip, port = pkt.payload.dst, pkt.dport
+    if (ip, port) not in open_sockets:
+        return
+    conn = open_sockets[ip, port]
+    conn.handle(pkt)
 
 def listen(ip_address, iface="wlan0"):
     filter_rule = "tcp and ip dst %s" % ip_address
