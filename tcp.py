@@ -20,7 +20,8 @@ class TCPSocket(object):
         self.recv_queue = Queue()
 
     def close(self):
-        pass
+        dest_ip, dest_port = self.ip_header.dst.repr, self.dest_port
+        del open_sockets[dest_ip, dest_port]
 
     @staticmethod
     def create_ack(packet):
