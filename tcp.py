@@ -1,5 +1,6 @@
 from scapy.all import TCP, IP, sr1, send
 import random
+from Queue import Queue
 
 source_port = random.randint(12345, 50000)
 
@@ -13,6 +14,7 @@ class TCPConn(object):
         self.dest_port = dest_port
         self.src_port = source_port
         self.seq = random.randint(0, 100000)
+        self.recv_queue = Queue.Queue()
 
     @staticmethod
     def create_ack(packet):
@@ -33,4 +35,5 @@ class TCPConn(object):
         pass
 
     def recv(self):
+        # Block until everything is received
         return ""
