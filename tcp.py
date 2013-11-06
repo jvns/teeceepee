@@ -11,8 +11,8 @@ class TCPSocket(object):
                  src_ip='127.0.0.1', verbose=0):
         global source_port
         global open_sockets
-        open_sockets[dest_ip, dest_port] = self
         source_port += 1
+
         self.verbose = verbose
         self.ip_header = IP(dst=dest_ip, src=src_ip)
         self.dest_port = dest_port
@@ -20,9 +20,11 @@ class TCPSocket(object):
         self.seq = random.randint(0, 100000)
         self.recv_queue = Queue()
 
+        open_sockets[src_ip, source_port] = self
+
     def close(self):
-        dest_ip, dest_port = self.ip_header.dst.repr, self.dest_port
-        del open_sockets[dest_ip, dest_port]
+        src_ip, src_port = self.ip_header.src, self.src_port
+        del open_sockets[src_ip, src_port]
 
     @staticmethod
     def create_ack(packet):
@@ -38,6 +40,10 @@ class TCPSocket(object):
         ack_pkt = self.ip_header / self.create_ack(syn_ack_pkt)
         self.seq, self.ack = ack_pkt.seq, ack_pkt.ack
         send(ack_pkt, verbose=self.verbose)
+
+    def handle(self, packet):
+        print "Handling packet..."
+        print packet.summary()
 
     def send(self, payload):
         pass
