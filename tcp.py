@@ -1,6 +1,7 @@
-from scapy.all import TCP, IP, sr1, send
+from scapy.all import TCP, IP, sr1, send, sniff
 import random
 from Queue import Queue
+import threading
 
 source_port = random.randint(12345, 50000)
 open_sockets = {}
@@ -46,4 +47,11 @@ class TCPSocket(object):
         return ""
 
 def listen():
-    pass
+    host = "93.184.216.119"
+    while True:
+        packets = sniff(filter="tcp and host %s" % host, count=1)
+        print repr(packets[0])
+
+t = threading.Thread(target=listen)
+t.daemon=True
+t.start()
