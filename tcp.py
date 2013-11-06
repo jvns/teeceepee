@@ -26,8 +26,8 @@ class TCPConn(object):
         syn_pkt = self.ip_header / TCP(dport=self.dest_port, sport=self.src_port, flags="S", seq=self.seq)
         syn_ack_pkt = sr1(syn_pkt, verbose=self.verbose)
         ack_pkt = self.ip_header / self.create_ack(syn_ack_pkt)
+        self.seq, self.ack = ack_pkt.seq, ack_pkt.ack
         send(ack_pkt, verbose=self.verbose)
-        return syn_ack_pkt
 
     def send_data(self):
         pass
