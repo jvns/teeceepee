@@ -25,5 +25,10 @@ def test_send_data():
     assert len(data) > 5
 
 def test_open_socket():
+    tcp.open_sockets = {}
     conn = TCPSocket("example.com", 80, FAKE_IP)
+    print tcp.open_sockets
+    assert len(tcp.open_sockets) == 1
+    conn.close()
+    assert len(tcp.open_sockets) == 0
 
