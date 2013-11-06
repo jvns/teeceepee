@@ -3,18 +3,24 @@ import random
 from Queue import Queue
 
 source_port = random.randint(12345, 50000)
+open_sockets = {}
 
-class TCPConn(object):
-    def __init__(self, dest_port, dest_ip,
+class TCPSocket(object):
+    def __init__(self, dest_ip, dest_port,
                  src_ip='127.0.0.1', verbose=0):
         global source_port
+        global open_sockets
+        open_sockets[dest_ip, dest_port] = self
         source_port += 1
         self.verbose = verbose
         self.ip_header = IP(dst=dest_ip, src=src_ip)
         self.dest_port = dest_port
         self.src_port = source_port
         self.seq = random.randint(0, 100000)
-        self.recv_queue = Queue.Queue()
+        self.recv_queue = Queue()
+
+    def close(self):
+        pass
 
     @staticmethod
     def create_ack(packet):
