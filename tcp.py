@@ -1,4 +1,4 @@
-from scapy.all import TCP, IP, sr1, send, sniff
+from scapy.all import TCP, IP, send, sniff
 import random
 from Queue import Queue
 import threading
@@ -19,8 +19,16 @@ class TCPSocket(object):
         self.src_port = source_port
         self.seq = random.randint(0, 100000)
         self.recv_queue = Queue()
+        self.state = "CLOSED"
+        print "Initial sequence: ", self.seq
 
         open_sockets[src_ip, source_port] = self
+        self.send_syn()
+
+    def send_syn(self):
+        syn_pkt = self.ip_header / TCP(dport=self.dest_port, sport=self.src_port, flags="S", seq=self.seq)
+        send(syn_pkt, verbose=self.verbose)
+        self.state = "SYN-SENT"
 
     def close(self):
         src_ip, src_port = self.ip_header.src, self.src_port
@@ -34,15 +42,17 @@ class TCPSocket(object):
                    ack=packet.seq + 1,
                    flags="A")
 
-    def handshake(self):
-        syn_pkt = self.ip_header / TCP(dport=self.dest_port, sport=self.src_port, flags="S", seq=self.seq)
-        syn_ack_pkt = sr1(syn_pkt, verbose=self.verbose)
-        ack_pkt = self.ip_header / self.create_ack(syn_ack_pkt)
-        self.seq, self.ack = ack_pkt.seq, ack_pkt.ack
-        send(ack_pkt, verbose=self.verbose)
-
     def handle(self, packet):
+        print "Handling:",
         print packet.summary()
+        if self.state == "SYN-SENT":
+            print "Handling! hey!"
+            syn_ack_pkt = packet
+            ack_pkt = self.ip_header / self.create_ack(syn_ack_pkt)
+            send(ack_pkt, verbose=self.verbose)
+            self.seq, self.ack = ack_pkt.seq, ack_pkt.ack
+            self.state = "ESTABLISHED"
+
 
     def send(self, payload):
         pass
@@ -52,6 +62,8 @@ class TCPSocket(object):
         return ""
 
 def dispatch(pkt):
+    print "Dispatching:"
+    print pkt.summary()
     if not isinstance(pkt.payload.payload, TCP):
         return
     ip, port = pkt.payload.dst, pkt.dport

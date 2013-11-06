@@ -8,18 +8,20 @@ for _ in range(4):
     srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR))
 
 import tcp
+import time
 from tcp import TCPSocket
 
 def test_handshake():
     conn = TCPSocket("example.com", 80, FAKE_IP)
     initial_seq = conn.seq
-    conn.handshake()
+    # SYN-ACK should have finished by now
+    time.sleep(0.1)
+    print "conn.seq", conn.seq
     assert conn.seq == initial_seq + 1
 
 def test_send_data():
     payload = "GET / HTTP/1.0\r\n\r\n"
     conn = TCPSocket("google.com", 80, FAKE_IP)
-    conn.handshake()
     conn.send(payload)
     data = conn.recv()
     assert len(data) > 5
@@ -30,4 +32,3 @@ def test_open_socket():
     assert len(tcp.open_sockets) == 1
     conn.close()
     assert len(tcp.open_sockets) == 0
-
