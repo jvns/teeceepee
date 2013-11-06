@@ -7,8 +7,8 @@ from scapy.all import srp, Ether, ARP
 for _ in range(4):
     srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR))
 
-from tcp import TCPSocket
 import tcp
+from tcp import TCPSocket
 
 def test_handshake():
     conn = TCPSocket("example.com", 80, FAKE_IP)

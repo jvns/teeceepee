@@ -46,12 +46,16 @@ class TCPSocket(object):
         # Block until everything is received
         return ""
 
-def listen():
-    host = "93.184.216.119"
-    while True:
-        packets = sniff(filter="tcp and host %s" % host, count=1)
-        print repr(packets[0])
+def dispatch(pkt):
+    print pkt.summary()
 
-t = threading.Thread(target=listen)
-t.daemon=True
-t.start()
+def listen(ip_address, iface="wlan0"):
+    filter_rule = "tcp and ip dst %s" % ip_address
+    sniff(filter=filter_rule, iface=iface, prn=dispatch, store=0)
+
+def start_daemon(ip_address):
+    t = threading.Thread(target=listen, args=[ip_address])
+    t.daemon=True
+    t.start()
+
+start_daemon("10.0.4.4")
