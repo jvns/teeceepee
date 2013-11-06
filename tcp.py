@@ -29,5 +29,8 @@ class TCPConn(object):
         self.seq, self.ack = ack_pkt.seq, ack_pkt.ack
         send(ack_pkt, verbose=self.verbose)
 
-    def send_data(self):
+    def send(self, payload):
         pass
+
+    def recv(self):
+        return ""

@@ -15,3 +15,11 @@ def test_handshake():
     conn.handshake()
     assert conn.seq == initial_seq + 1
 
+def test_send_data():
+    payload = "GET / HTTP/1.0\r\n\r\n"
+    conn = TCPConn(80, "google.com", FAKE_IP)
+    conn.handshake()
+    conn.send(payload)
+    data = conn.recv()
+    assert len(data) > 5
+
