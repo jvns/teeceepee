@@ -37,3 +37,6 @@ class TCPConn(object):
     def recv(self):
         # Block until everything is received
         return ""
+
+def listen():
+    pass
