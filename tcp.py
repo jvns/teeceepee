@@ -46,13 +46,12 @@ class TCPSocket(object):
         print "Handling:",
         print packet.summary()
         if self.state == "SYN-SENT":
-            print "Handling! hey!"
             syn_ack_pkt = packet
             ack_pkt = self.ip_header / self.create_ack(syn_ack_pkt)
             send(ack_pkt, verbose=self.verbose)
             self.seq, self.ack = ack_pkt.seq, ack_pkt.ack
             self.state = "ESTABLISHED"
-
+            return
 
     def send(self, payload):
         pass
@@ -62,12 +61,13 @@ class TCPSocket(object):
         return ""
 
 def dispatch(pkt):
-    print "Dispatching:"
+    print "Dispatching:",
     print pkt.summary()
     if not isinstance(pkt.payload.payload, TCP):
         return
     ip, port = pkt.payload.dst, pkt.dport
     if (ip, port) not in open_sockets:
+        print "Dropping packet!", open_sockets.keys()
         return
     conn = open_sockets[ip, port]
     conn.handle(pkt)
