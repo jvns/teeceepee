@@ -9,8 +9,6 @@ class TCPListener(object):
         self.open_sockets = {}
 
     def dispatch(self, pkt):
-        print "Dispatching:",
-        print pkt.summary()
         if not isinstance(pkt.payload.payload, TCP):
             print "Wrong kind of packet!"
             return
