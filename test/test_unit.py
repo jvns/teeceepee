@@ -39,16 +39,20 @@ def test_handshake():
     assert syn.sprintf("%TCP.flags%") == "S"
     assert ack.sprintf("%TCP.flags%") == "A"
 
-def test_send_push_ack():
-    packet_log = rdpcap("test/inputs/localhost-wget.pcap")
-
-    print len(packet_log)
+def create_session(packet_log):
     listener = MockListener()
-    syn, syn_ack, ack, push_ack = packet_log[:4]
+    syn = packet_log[0]
     listener.source_port = syn.sport - 1
     conn = TCPSocket(listener, syn.payload.dst, syn.dport, )
     # Change the sequence number so that we can test it
     conn.seq = syn.seq
+    return listener, conn
+
+def test_send_push_ack():
+    packet_log = rdpcap("test/inputs/localhost-wget.pcap")
+    listener, conn = create_session(packet_log)
+
+    _, syn_ack, _, push_ack = packet_log[:4]
     listener.dispatch(syn_ack)
     assert conn.state == "ESTABLISHED"
 
@@ -63,5 +67,12 @@ def test_send_push_ack():
     assert our_push_ack.ack == push_ack.ack
     assert our_push_ack.load == push_ack.load
     assert our_push_ack.sprintf("%TCP.flags%") == push_ack.sprintf("%TCP.flags%")
+
+
+def test_fin_ack():
+    packet_log = rdpcap("test/inputs/tiniest-session.pcap")
+    listener, conn = create_session(packet_log)
+
+
 
 
