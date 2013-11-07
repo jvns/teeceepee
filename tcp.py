@@ -40,7 +40,11 @@ class TCPSocket(object):
 
     @staticmethod
     def next_seq(packet):
-        return packet.seq + 1
+        # really not right.
+        if hasattr(packet, 'load'):
+            return packet.seq + len(packet.load)
+        else:
+            return packet.seq + 1
 
     def create_ack(self, packet):
         return TCP(dport=packet.sport,
