@@ -49,6 +49,13 @@ def create_session(packet_log):
     return listener, conn
 
 def check_mostly_same(pkt1, pkt2):
+    print repr(pkt1)
+    print repr(pkt2)
+
+    print pkt1.summary()
+    print pkt2.summary()
+
+
     assert pkt1.seq == pkt2.seq
     assert pkt1.ack == pkt2.ack
     assert pkt1.sprintf("%TCP.flags%") == pkt2.sprintf("%TCP.flags%")
@@ -91,6 +98,38 @@ def test_fin_ack():
     check_mostly_same(our_ack, our_ack_log)
 
     assert conn.state == "CLOSED"
+
+def check_replay(listener, conn, packet_log):
+    """
+    Check if replaying the packets gives the same result
+    """
+    ip, port = conn.src_ip, conn.src_port
+    is_from_source = lambda x: x.payload.dst == ip and x.dport == port
+
+    incoming = [x for x in packet_log if is_from_source(x)]
+    outgoing = [x for x in packet_log if not is_from_source(x)]
+
+    for pkt in incoming:
+        listener.dispatch(pkt)
+
+    our_outgoing = listener.received_packets[-len(outgoing):]
+    for ours, actual in zip(our_outgoing, outgoing):
+        check_mostly_same(ours, actual)
+
+
+def test_recv_one_packet():
+    packet_log = rdpcap("test/inputs/localhost-wget.pcap")
+    listener, conn = create_session(packet_log)
+
+    _, syn_ack, _, push_ack = packet_log[:4]
+
+    listener.dispatch(syn_ack)
+    payload = str(push_ack.payload.payload.payload)
+    conn.send(payload)
+
+    check_replay(listener, conn, packet_log[4:])
+
+
 
 
 
