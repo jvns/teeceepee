@@ -22,8 +22,9 @@ def test_handshake():
     assert conn.state == 'ESTABLISHED'
 
 def test_send_data():
+    google_ip = "173.194.43.39"
     payload = "GET / HTTP/1.0\r\n\r\n"
-    conn = TCPSocket("example.com", 80, FAKE_IP)
+    conn = TCPSocket(google_ip, 80, FAKE_IP)
     orig_seq = conn.seq
     conn.send(payload)
     assert conn.state == "ESTABLISHED"

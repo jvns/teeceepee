@@ -62,7 +62,7 @@ class TCPSocket(object):
         while self.state != "ESTABLISHED":
             time.sleep(0.001)
         # Do the actual send
-        packet = self.ip_header / TCP(dport=self.dest_port, sport=self.src_port, flags="PA", seq=self.seq)
+        packet = self.ip_header / TCP(dport=self.dest_port, sport=self.src_port, flags="PA", seq=self.seq, ack=self.ack) / payload
         self.seq += len(payload)
         send(packet)
 
