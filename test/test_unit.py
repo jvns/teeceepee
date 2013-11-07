@@ -21,3 +21,12 @@ def test_handshake():
 
     assert conn.seq == initial_seq + 1
     assert conn.state == "ESTABLISHED"
+
+    # We should have sent exactly two packets
+    # Check that they look okay
+    pkts = listener.received_packets
+    assert len(pkts) == 2
+    syn, ack = pkts
+    assert ack.seq == syn.seq + 1
+    assert syn.sprintf("%TCP.flags%") == "S"
+    assert ack.sprintf("%TCP.flags%") == "A"
