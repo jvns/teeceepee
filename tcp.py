@@ -39,11 +39,14 @@ class TCPSocket(object):
         self.listener.send(self.create_fin_ack())
 
     @staticmethod
-    def create_ack(packet):
+    def next_seq(packet):
+        return packet.seq + 1
+
+    def create_ack(self, packet):
         return TCP(dport=packet.sport,
                    sport=packet.dport,
                    seq=packet.ack,
-                   ack=packet.seq + 1,
+                   ack=self.next_seq(packet),
                    flags="A")
 
     def send_ack(self, packet):
