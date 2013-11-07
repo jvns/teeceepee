@@ -10,6 +10,14 @@ from scapy.all import IP, TCP, Ether
 from mock_listener import MockListener
 
 
+def test_syn():
+    listener = MockListener()
+    conn = TCPSocket(listener, "localhost", 80)
+    assert conn.state == "SYN-SENT"
+    pkts = listener.received_packets
+    assert len(pkts) == 1
+    assert pkts[0].sprintf("%TCP.flags%") == "S"
+
 def test_handshake():
     listener = MockListener()
     conn = TCPSocket(listener, "localhost", 80)
@@ -30,3 +38,4 @@ def test_handshake():
     assert ack.seq == syn.seq + 1
     assert syn.sprintf("%TCP.flags%") == "S"
     assert ack.sprintf("%TCP.flags%") == "A"
+
