@@ -25,6 +25,7 @@ class TCPListener(object):
         send(packet)
 
     def get_port(self):
+        # We need to return a new port number to each new connection
         self.source_port += 1
         return self.source_port
 

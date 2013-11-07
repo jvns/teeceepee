@@ -6,7 +6,7 @@ Mocks a listener instead of sending real packets.
 """
 
 from tcp import TCPSocket
-from scapy.all import IP, TCP, Ether
+from scapy.all import IP, TCP, Ether, rdpcap
 from mock_listener import MockListener
 
 
@@ -38,4 +38,30 @@ def test_handshake():
     assert ack.seq == syn.seq + 1
     assert syn.sprintf("%TCP.flags%") == "S"
     assert ack.sprintf("%TCP.flags%") == "A"
+
+def test_send_push_ack():
+    packet_log = rdpcap("test/inputs/localhost-wget.pcap")
+
+    print len(packet_log)
+    listener = MockListener()
+    syn, syn_ack, ack, push_ack = packet_log[:4]
+    listener.source_port = syn.sport - 1
+    conn = TCPSocket(listener, syn.payload.dst, syn.dport, )
+    # Change the sequence number so that we can test it
+    conn.seq = syn.seq
+    listener.dispatch(syn_ack)
+    assert conn.state == "ESTABLISHED"
+
+    # Extract the payload (3 levels down: Ether, IP, TCP)
+    payload = str(push_ack.payload.payload.payload)
+    conn.send(payload)
+
+    # Check to make sure the PUSH-ACK packet packet that gets sent looks good
+    our_push_ack = listener.received_packets[-1]
+
+    assert our_push_ack.seq == push_ack.seq
+    assert our_push_ack.ack == push_ack.ack
+    assert our_push_ack.load == push_ack.load
+    assert our_push_ack.sprintf("%TCP.flags%") == push_ack.sprintf("%TCP.flags%")
+
 
