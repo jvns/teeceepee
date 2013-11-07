@@ -48,6 +48,15 @@ def create_session(packet_log):
     conn.seq = syn.seq
     return listener, conn
 
+def check_mostly_same(pkt1, pkt2):
+    assert pkt1.seq == pkt2.seq
+    assert pkt1.ack == pkt2.ack
+    assert pkt1.sprintf("%TCP.flags%") == pkt2.sprintf("%TCP.flags%")
+    if hasattr(pkt1, 'load'):
+        assert pkt1.load == pkt2.load
+    else:
+        assert not hasattr(pkt2, 'load')
+
 def test_send_push_ack():
     packet_log = rdpcap("test/inputs/localhost-wget.pcap")
     listener, conn = create_session(packet_log)
@@ -62,17 +71,26 @@ def test_send_push_ack():
 
     # Check to make sure the PUSH-ACK packet packet that gets sent looks good
     our_push_ack = listener.received_packets[-1]
+    check_mostly_same(our_push_ack, push_ack)
 
-    assert our_push_ack.seq == push_ack.seq
-    assert our_push_ack.ack == push_ack.ack
-    assert our_push_ack.load == push_ack.load
-    assert our_push_ack.sprintf("%TCP.flags%") == push_ack.sprintf("%TCP.flags%")
 
 
 def test_fin_ack():
     packet_log = rdpcap("test/inputs/tiniest-session.pcap")
     listener, conn = create_session(packet_log)
 
+    _, syn_ack_log, _, our_fin_ack_log, their_fin_ack_log, our_ack_log = packet_log
+    listener.dispatch(syn_ack_log)
+
+    conn.close()
+    listener.dispatch(their_fin_ack_log)
+
+    assert len(listener.received_packets) == 4
+
+    our_ack = listener.received_packets[-1]
+    check_mostly_same(our_ack, our_ack_log)
+
+    assert conn.state == "CLOSED"
 
 
 

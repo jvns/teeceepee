@@ -27,9 +27,16 @@ class TCPSocket(object):
         self.listener.send(syn_pkt)
         self.state = "SYN-SENT"
 
+    def create_fin_ack(self):
+        return TCP(dport=self.dest_port,
+                   sport=self.src_port,
+                   seq=self.seq,
+                   ack=self.ack,
+                   flags="FA")
+
     def close(self):
-        src_ip, src_port = self.ip_header.src, self.src_port
-        self.listener.close(src_ip, src_port)
+        self.state = "FIN-WAIT-1"
+        self.listener.send(self.create_fin_ack())
 
     @staticmethod
     def create_ack(packet):
@@ -47,14 +54,20 @@ class TCPSocket(object):
     def handle(self, packet):
         print "Handling:",
         print packet.summary()
-        if packet.sprintf("%TCP.flags%") == 'FA':
-            self.send_ack(packet)
-            self.state = "CLOSED"
-            return
-        if self.state == "SYN-SENT":
+        if self.state == "ESTABLISHED":
+            if packet.sprintf("%TCP.flags%") == 'FA':
+                self.send_ack(packet)
+                self.state = "CLOSED"
+                return
+        elif self.state == "SYN-SENT":
             self.send_ack(packet)
             self.state = "ESTABLISHED"
             return
+        elif self.state == "FIN-WAIT-1":
+            if packet.sprintf("%TCP.flags%") == 'FA':
+                self.send_ack(packet)
+                self.state = "CLOSED"
+
 
     def send(self, payload):
         # Block
