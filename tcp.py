@@ -62,6 +62,9 @@ class TCPSocket(object):
         while self.state != "ESTABLISHED":
             time.sleep(0.001)
         # Do the actual send
+        packet = self.ip_header / TCP(dport=self.dest_port, sport=self.src_port, flags="PA", seq=self.seq)
+        self.seq += len(payload)
+        send(packet)
 
     def recv(self):
         # Block until everything is received

@@ -23,9 +23,12 @@ def test_handshake():
 
 def test_send_data():
     payload = "GET / HTTP/1.0\r\n\r\n"
-    conn = TCPSocket("google.com", 80, FAKE_IP)
+    conn = TCPSocket("example.com", 80, FAKE_IP)
+    orig_seq = conn.seq
     conn.send(payload)
     assert conn.state == "ESTABLISHED"
+    assert conn.seq == orig_seq + len(payload) + 1
+
     data = conn.recv()
     assert len(data) > 5
 
