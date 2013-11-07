@@ -29,4 +29,10 @@ def test_send_data():
 
 def test_open_socket():
     conn = TCPSocket("example.com", 80, FAKE_IP)
-    assert (FAKE_IP, conn.src_port) in tcp.open_sockets
+    assert (FAKE_IP, conn.src_port) in tcp.listener.open_sockets
+
+def test_teardown():
+    conn = TCPSocket("example.com", 80, FAKE_IP)
+    conn.close()
+    assert conn.state == 'CLOSED'
+

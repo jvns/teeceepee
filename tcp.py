@@ -1,28 +1,25 @@
-from scapy.all import TCP, IP, send, sniff
+from scapy.all import TCP, IP, send
+from tcp_listener import TCPListener
 import random
 from Queue import Queue
-import threading
 
-source_port = random.randint(12345, 50000)
-open_sockets = {}
+listener = TCPListener("10.0.4.4")
+listener.start_daemon()
 
 class TCPSocket(object):
     def __init__(self, dest_ip, dest_port,
                  src_ip='127.0.0.1', verbose=0):
-        global source_port
-        global open_sockets
-        source_port += 1
-
         self.verbose = verbose
         self.ip_header = IP(dst=dest_ip, src=src_ip)
         self.dest_port = dest_port
-        self.src_port = source_port
+        self.src_port = listener.get_port()
         self.seq = random.randint(0, 100000)
         self.recv_queue = Queue()
         self.state = "CLOSED"
         print "Initial sequence: ", self.seq
 
-        open_sockets[src_ip, source_port] = self
+        listener.open(src_ip, self.src_port, self)
+
         self.send_syn()
 
     def send_syn(self):
@@ -32,7 +29,7 @@ class TCPSocket(object):
 
     def close(self):
         src_ip, src_port = self.ip_header.src, self.src_port
-        del open_sockets[src_ip, src_port]
+        listener.close(src_ip, src_port)
 
     @staticmethod
     def create_ack(packet):
@@ -42,14 +39,20 @@ class TCPSocket(object):
                    ack=packet.seq + 1,
                    flags="A")
 
+    def send_ack(self, packet):
+        ack_pkt = self.ip_header / self.create_ack(packet)
+        send(ack_pkt, verbose=self.verbose)
+        self.seq, self.ack = ack_pkt.seq, ack_pkt.ack
+
     def handle(self, packet):
         print "Handling:",
         print packet.summary()
+        if packet.sprintf("%TCP.flags%") == 'FA':
+            self.send_ack(packet)
+            self.state = "CLOSED"
+            return
         if self.state == "SYN-SENT":
-            syn_ack_pkt = packet
-            ack_pkt = self.ip_header / self.create_ack(syn_ack_pkt)
-            send(ack_pkt, verbose=self.verbose)
-            self.seq, self.ack = ack_pkt.seq, ack_pkt.ack
+            self.send_ack(packet)
             self.state = "ESTABLISHED"
             return
 
@@ -60,25 +63,4 @@ class TCPSocket(object):
         # Block until everything is received
         return ""
 
-def dispatch(pkt):
-    print "Dispatching:",
-    print pkt.summary()
-    if not isinstance(pkt.payload.payload, TCP):
-        return
-    ip, port = pkt.payload.dst, pkt.dport
-    if (ip, port) not in open_sockets:
-        print "Dropping packet!", open_sockets.keys()
-        return
-    conn = open_sockets[ip, port]
-    conn.handle(pkt)
 
-def listen(ip_address, iface="wlan0"):
-    filter_rule = "tcp and ip dst %s" % ip_address
-    sniff(filter=filter_rule, iface=iface, prn=dispatch, store=0)
-
-def start_daemon(ip_address):
-    t = threading.Thread(target=listen, args=[ip_address])
-    t.daemon=True
-    t.start()
-
-start_daemon("10.0.4.4")
