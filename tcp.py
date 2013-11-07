@@ -2,6 +2,7 @@ from scapy.all import TCP, IP, send
 from tcp_listener import TCPListener
 import random
 from Queue import Queue
+import time
 
 listener = TCPListener("10.0.4.4")
 listener.start_daemon()
@@ -57,10 +58,12 @@ class TCPSocket(object):
             return
 
     def send(self, payload):
-        pass
+        # Block
+        while self.state != "ESTABLISHED":
+            time.sleep(0.001)
+        # Do the actual send
 
     def recv(self):
         # Block until everything is received
         return ""
-
 

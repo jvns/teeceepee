@@ -13,10 +13,11 @@ from tcp import TCPSocket
 
 def test_handshake():
     conn = TCPSocket("example.com", 80, FAKE_IP)
+    assert conn.state == 'SYN-SENT'
     initial_seq = conn.seq
     # SYN-ACK should have finished by now
-    time.sleep(0.1)
-    print "conn.seq", conn.seq
+    time.sleep(3)
+    print "conn.seq", conn.seq, "conn.state", conn.state, "initial_seq", initial_seq
     assert conn.seq == initial_seq + 1
     assert conn.state == 'ESTABLISHED'
 
@@ -24,6 +25,7 @@ def test_send_data():
     payload = "GET / HTTP/1.0\r\n\r\n"
     conn = TCPSocket("google.com", 80, FAKE_IP)
     conn.send(payload)
+    assert conn.state == "ESTABLISHED"
     data = conn.recv()
     assert len(data) > 5
 
