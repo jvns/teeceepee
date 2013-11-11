@@ -3,6 +3,9 @@ import random
 from Queue import Queue
 import time
 
+class BadPacketError(Exception):
+    pass
+
 class TCPSocket(object):
     def __init__(self, listener, dest_ip, dest_port,
                  src_ip='127.0.0.1', verbose=0):
@@ -79,15 +82,20 @@ class TCPSocket(object):
         recv_flags = packet.sprintf("%TCP.flags%")
         send_flags = ""
 
+        # Handle all the cases for self.state explicitly
         if self.state == "ESTABLISHED" and 'F' in recv_flags:
             send_flags = "F"
             self.state = "TIME-WAIT"
+        elif self.state == "ESTABLISHED":
+            pass
         elif self.state == "SYN-SENT":
             self.seq += 1
             self.state = "ESTABLISHED"
         elif self.state == "FIN-WAIT-1" and 'F' in recv_flags:
             self.seq += 1
             self.state = "TIME-WAIT"
+        else:
+            raise BadPacketError("Oh no!")
 
         self._send_ack(flags=send_flags)
 
