@@ -31,8 +31,6 @@ class TCPSocket(object):
         """Every packet we send should go through here."""
         load = kwargs.pop('load', None)
         flags = kwargs.pop('flags', "")
-        if load is not None:
-            self.seq += len(load)
         packet = TCP(dport=self.dest_port,
                      sport=self.src_port,
                      seq=self.seq,
@@ -46,6 +44,8 @@ class TCPSocket(object):
         packet.load = load
         full_packet = self.ip_header / packet
         self.listener.send(full_packet)
+        if load is not None:
+            self.seq += len(load)
 
     def _send_ack(self):
         """We actually don't need to do much here!"""
