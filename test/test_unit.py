@@ -18,6 +18,7 @@ def test_syn():
     assert len(pkts) == 1
     assert pkts[0].sprintf("%TCP.flags%") == "S"
 
+
 def test_handshake():
     listener = MockListener()
     conn = TCPSocket(listener, "localhost", 80)
@@ -38,6 +39,7 @@ def test_handshake():
     assert ack.seq == syn.seq + 1
     assert syn.sprintf("%TCP.flags%") == "S"
     assert ack.sprintf("%TCP.flags%") == "A"
+
 
 def create_session(packet_log):
     listener = MockListener()
@@ -75,7 +77,6 @@ def test_send_push_ack():
     check_mostly_same(our_push_ack, push_ack)
 
 
-
 def test_fin_ack():
     packet_log = rdpcap("test/inputs/tiniest-session.pcap")
     listener, conn = create_session(packet_log)
@@ -92,6 +93,7 @@ def test_fin_ack():
     check_mostly_same(our_ack, our_ack_log)
 
     assert conn.state == "TIME-WAIT"
+
 
 def check_replay(listener, conn, packet_log):
     """
@@ -122,8 +124,4 @@ def test_recv_one_packet():
     conn.send(payload)
 
     check_replay(listener, conn, packet_log[4:])
-
-
-
-
 
