@@ -40,10 +40,10 @@ class TCPSocket(object):
             packet.flags = flags
         else:
             packet.flags = flags + "A"
-        # Add the payload
-        packet.load = load
         # Add the IP header
         full_packet = self.ip_header / packet
+        # Add the payload
+        full_packet.load = load
         # Send the packet over the wire
         self.listener.send(full_packet)
         # Update the sequence number with the number of bytes sent
