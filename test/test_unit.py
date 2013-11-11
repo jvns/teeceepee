@@ -127,4 +127,4 @@ def test_recv_one_packet():
     check_replay(listener, conn, packet_log[4:7])
 
     # Check that recv() actually works
-    assert conn.recv() == packet_log[4].payload.payload.payload
+    assert conn.recv() == str(packet_log[5].payload.payload.payload)

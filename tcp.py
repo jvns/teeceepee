@@ -14,7 +14,7 @@ class TCPSocket(object):
         self.ack = None
         self.dest_ip = dest_ip
         self.seq = random.randint(0, 100000)
-        self.recv_queue = Queue()
+        self.recv_buffer = ""
         self.state = "CLOSED"
         self.listener = listener
 
@@ -69,6 +69,8 @@ class TCPSocket(object):
     def handle(self, packet):
         # Update our state to indicate that we've received the packet
         self.ack = max(self.next_seq(packet), self.ack)
+        if hasattr(packet, 'load'):
+            self.recv_buffer += packet.load
 
         tcp_flags = packet.sprintf("%TCP.flags%")
 
@@ -95,6 +97,7 @@ class TCPSocket(object):
         self._send(load=payload, flags="P")
 
     def recv(self):
-        # Block until everything is received
-        return ""
+        recv = self.recv_buffer
+        self.recv_buffer = ""
+        return recv
 
