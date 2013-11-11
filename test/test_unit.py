@@ -112,6 +112,10 @@ def check_replay(listener, conn, packet_log):
     for pkt in incoming:
         listener.dispatch(pkt)
 
+    print "Received packets:"
+    for p in listener.received_packets:
+        print p.summary(), "ack:", p.ack
+    print ""
     our_outgoing = listener.received_packets[-len(outgoing):]
     for ours, actual in zip(our_outgoing, outgoing):
         check_mostly_same(ours, actual)

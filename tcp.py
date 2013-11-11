@@ -11,6 +11,7 @@ class TCPSocket(object):
         self.dest_port = dest_port
         self.src_port = listener.get_port()
         self.src_ip = src_ip
+        self.ack = None
         self.dest_ip = dest_ip
         self.seq = random.randint(0, 100000)
         self.recv_queue = Queue()
@@ -20,60 +21,67 @@ class TCPSocket(object):
 
         self.listener.open(src_ip, self.src_port, self)
 
-        self.send_syn()
+        self._send_syn()
 
-    def send_syn(self):
-        syn_pkt = self.ip_header / TCP(dport=self.dest_port, sport=self.src_port, flags="S", seq=self.seq)
-        self.listener.send(syn_pkt)
+    def _send_syn(self):
+        self._send(flags="S")
         self.state = "SYN-SENT"
 
-    def create_fin_ack(self):
-        return TCP(dport=self.dest_port,
-                   sport=self.src_port,
-                   seq=self.seq,
-                   ack=self.ack,
-                   flags="FA")
+    def _send(self, **kwargs):
+        """Every packet we send should go through here."""
+        load = kwargs.pop('load', None)
+        flags = kwargs.pop('flags', "")
+        if load is not None:
+            self.seq += len(load)
+        packet = TCP(dport=self.dest_port,
+                     sport=self.src_port,
+                     seq=self.seq,
+                     ack=self.ack,
+                     **kwargs)
+        # Always ACK unless it's the first packet
+        if self.state == "CLOSED":
+            packet.flags = flags
+        else:
+            packet.flags = flags + "A"
+        packet.load = load
+        full_packet = self.ip_header / packet
+        self.listener.send(full_packet)
+
+    def _send_ack(self):
+        """We actually don't need to do much here!"""
+        self._send()
 
     def close(self):
         self.state = "FIN-WAIT-1"
-        self.listener.send(self.create_fin_ack())
+        self._send(flags="F")
 
     @staticmethod
     def next_seq(packet):
         # really not right.
         if hasattr(packet, 'load'):
+            print "Adding load: ", len(packet.load), "\n"
             return packet.seq + len(packet.load)
         else:
             return packet.seq + 1
 
-    def create_ack(self, packet):
-        return TCP(dport=packet.sport,
-                   sport=packet.dport,
-                   seq=packet.ack,
-                   ack=self.next_seq(packet),
-                   flags="A")
-
-    def send_ack(self, packet):
-        ack_pkt = self.ip_header / self.create_ack(packet)
-        self.listener.send(ack_pkt)
-        self.seq, self.ack = ack_pkt.seq, ack_pkt.ack
-
     def handle(self, packet):
+        # Update our state to indicate that we've received the packet
+        self.ack = max(self.next_seq(packet), self.ack)
+
         print "Handling:",
         print packet.summary()
-        if self.state == "ESTABLISHED":
-            if packet.sprintf("%TCP.flags%") == 'FA':
-                self.send_ack(packet)
-                self.state = "CLOSED"
-                return
+
+        tcp_flags = packet.sprintf("%TCP.flags%")
+
+        if self.state == "ESTABLISHED" and 'F' in tcp_flags:
+            self.state = "CLOSED"
         elif self.state == "SYN-SENT":
-            self.send_ack(packet)
+            self.seq += 1
             self.state = "ESTABLISHED"
-            return
-        elif self.state == "FIN-WAIT-1":
-            if packet.sprintf("%TCP.flags%") == 'FA':
-                self.send_ack(packet)
-                self.state = "CLOSED"
+        elif self.state == "FIN-WAIT-1" and 'F' in tcp_flags:
+            self.state = "CLOSED"
+
+        self._send_ack()
 
 
     def send(self, payload):
@@ -81,9 +89,7 @@ class TCPSocket(object):
         while self.state != "ESTABLISHED":
             time.sleep(0.001)
         # Do the actual send
-        packet = self.ip_header / TCP(dport=self.dest_port, sport=self.src_port, flags="PA", seq=self.seq, ack=self.ack) / payload
-        self.seq += len(payload)
-        self.listener.send(packet)
+        self._send(load=payload, flags="P")
 
     def recv(self):
         # Block until everything is received
