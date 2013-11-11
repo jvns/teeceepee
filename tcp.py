@@ -73,14 +73,16 @@ class TCPSocket(object):
         tcp_flags = packet.sprintf("%TCP.flags%")
 
         if self.state == "ESTABLISHED" and 'F' in tcp_flags:
-            self.state = "CLOSED"
+            self.state = "TIME-WAIT"
         elif self.state == "SYN-SENT":
             self.seq += 1
             self.state = "ESTABLISHED"
         elif self.state == "FIN-WAIT-1" and 'F' in tcp_flags:
-            self.state = "CLOSED"
+            self.seq += 1
+            self.state = "TIME-WAIT"
 
         self._send_ack()
+
 
 
     def send(self, payload):

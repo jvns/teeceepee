@@ -52,10 +52,11 @@ def check_mostly_same(pkt1, pkt2):
     assert pkt1.seq == pkt2.seq
     assert pkt1.ack == pkt2.ack
     assert pkt1.sprintf("%TCP.flags%") == pkt2.sprintf("%TCP.flags%")
-    if hasattr(pkt1, 'load'):
-        assert pkt1.load == pkt2.load
-    else:
-        assert (not hasattr(pkt2, 'load')) or (pkt2.load is None)
+    if not hasattr(pkt1, 'load'):
+        pkt1.load = None
+    if not hasattr(pkt2, 'load'):
+        pkt2.load = None
+    assert pkt1.load == pkt2.load
 
 def test_send_push_ack():
     packet_log = rdpcap("test/inputs/localhost-wget.pcap")
@@ -90,7 +91,7 @@ def test_fin_ack():
     our_ack = listener.received_packets[-1]
     check_mostly_same(our_ack, our_ack_log)
 
-    assert conn.state == "CLOSED"
+    assert conn.state == "TIME-WAIT"
 
 def check_replay(listener, conn, packet_log):
     """
