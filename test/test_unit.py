@@ -12,16 +12,19 @@ from mock_listener import MockListener
 
 def test_syn():
     listener = MockListener()
-    conn = TCPSocket(listener, "localhost", 80)
+    conn = TCPSocket(listener)
+    conn.connect("localhost", 80)
+
     assert conn.state == "SYN-SENT"
     pkts = listener.received_packets
     assert len(pkts) == 1
     assert pkts[0].sprintf("%TCP.flags%") == "S"
 
 
-def test_handshake():
+def test_handshake_client():
     listener = MockListener()
-    conn = TCPSocket(listener, "localhost", 80)
+    conn = TCPSocket(listener)
+    conn.connect("localhost", 80)
     initial_seq = conn.seq
 
     tcp_packet = TCP(dport=conn.src_port, flags="SA", seq=100, ack=initial_seq + 1)
@@ -45,7 +48,8 @@ def create_session(packet_log):
     listener = MockListener()
     syn = packet_log[0]
     listener.source_port = syn.sport - 1
-    conn = TCPSocket(listener, syn.payload.dst, syn.dport, )
+    conn = TCPSocket(listener)
+    conn.connect(syn.payload.dst, syn.dport)
     # Change the sequence number so that we can test it
     conn.seq = syn.seq
     return listener, conn
@@ -146,3 +150,4 @@ def test_recv_many_packets():
     # Check that the PUSH/ACK sequence is the same
     recv = conn.recv()
     assert recv[-36001:-1]  == "a" * 36000
+

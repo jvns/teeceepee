@@ -7,23 +7,24 @@ class BadPacketError(Exception):
     pass
 
 class TCPSocket(object):
-    def __init__(self, listener, dest_ip, dest_port,
-                 src_ip='127.0.0.1', verbose=0):
-        self.verbose = verbose
-        self.ip_header = IP(dst=dest_ip, src=src_ip)
-        self.dest_port = dest_port
-        self.src_port = listener.get_port()
-        self.src_ip = src_ip
-        self.ack = None
-        self.dest_ip = dest_ip
-        self.seq = self._generate_seq()
-        self.recv_buffer = ""
+    def __init__(self, listener, src_ip='127.0.0.1', verbose=0):
         self.state = "CLOSED"
+        self.verbose = verbose
+        self.src_ip = src_ip
+        self.recv_buffer = ""
         self.listener = listener
 
-        self.listener.open(src_ip, self.src_port, self)
 
+    def connect(self, host, port):
+        self.dest_port = port
+        self.dest_ip = host
+        self.ack = None
+        self.seq = self._generate_seq()
+        self.ip_header = IP(dst=self.dest_ip, src=self.src_ip)
+        self.src_port = self.listener.get_port()
+        self.listener.open(self.src_ip, self.src_port, self)
         self._send_syn()
+
 
     @staticmethod
     def _generate_seq():
