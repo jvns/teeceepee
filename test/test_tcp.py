@@ -3,15 +3,23 @@
 FAKE_IP = "10.0.4.4"
 MAC_ADDR = "60:67:20:eb:7b:bc"
 from scapy.all import srp, Ether, ARP
+import sys
+import os
 
-for _ in range(4):
-    srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR))
+# The tests can't run as not-root
+RUN = (os.getuid() == 1)
+
+
+if RUN:
+    for _ in range(4):
+        srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR))
 
 import time
 import tcp
 from tcp import TCPSocket
 
 def test_handshake():
+    if not RUN: return
     conn = TCPSocket("example.com", 80, FAKE_IP)
     assert conn.state == 'SYN-SENT'
     initial_seq = conn.seq
@@ -22,6 +30,7 @@ def test_handshake():
     assert conn.state == 'ESTABLISHED'
 
 def test_send_data():
+    if not RUN: return
     google_ip = "173.194.43.39"
     payload = "GET / HTTP/1.0\r\n\r\n"
     conn = TCPSocket(google_ip, 80, FAKE_IP)
@@ -34,10 +43,12 @@ def test_send_data():
     assert len(data) > 5
 
 def test_open_socket():
+    if not RUN: return
     conn = TCPSocket("example.com", 80, FAKE_IP)
     assert (FAKE_IP, conn.src_port) in tcp.listener.open_sockets
 
 def test_teardown():
+    if not RUN: return
     conn = TCPSocket("example.com", 80, FAKE_IP)
     conn.close()
     assert conn.state == 'CLOSED'
