@@ -95,7 +95,7 @@ def test_fin_ack():
     assert conn.state == "TIME-WAIT"
 
 
-def check_replay(listener, conn, packet_log):
+def check_replay(listener, conn, packet_log, check=True):
     """
     Check if replaying the packets gives the same result
     """
@@ -108,7 +108,11 @@ def check_replay(listener, conn, packet_log):
     for pkt in incoming:
         listener.dispatch(pkt)
 
+    if not check:
+        return
+
     our_outgoing = listener.received_packets[-len(outgoing):]
+
     for ours, actual in zip(our_outgoing, outgoing):
         check_mostly_same(ours, actual)
 
@@ -128,3 +132,17 @@ def test_recv_one_packet():
 
     # Check that recv() actually works
     assert conn.recv() == str(packet_log[5].payload.payload.payload)
+
+def test_recv_many_packets():
+    packet_log = rdpcap("test/inputs/wget-36000-as.pcap")
+    listener, conn = create_session(packet_log)
+    _, syn_ack, _, push_ack = packet_log[:4]
+
+    listener.dispatch(syn_ack)
+    payload = str(push_ack.payload.payload.payload)
+    conn.send(payload)
+
+    check_replay(listener, conn, packet_log[4:], check=False)
+    # Check that the PUSH/ACK sequence is the same
+    recv = conn.recv()
+    assert recv[-36001:-1]  == "a" * 36000
