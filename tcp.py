@@ -13,7 +13,7 @@ class TCPSocket(object):
         self.src_ip = src_ip
         self.ack = None
         self.dest_ip = dest_ip
-        self.seq = random.randint(0, 100000)
+        self.seq = self._generate_seq()
         self.recv_buffer = ""
         self.state = "CLOSED"
         self.listener = listener
@@ -21,6 +21,10 @@ class TCPSocket(object):
         self.listener.open(src_ip, self.src_port, self)
 
         self._send_syn()
+
+    @staticmethod
+    def _generate_seq():
+        return random.randint(0, 100000)
 
     def _send_syn(self):
         self._send(flags="S")
@@ -50,9 +54,9 @@ class TCPSocket(object):
         if load is not None:
             self.seq += len(load)
 
-    def _send_ack(self):
+    def _send_ack(self, **kwargs):
         """We actually don't need to do much here!"""
-        self._send()
+        self._send(**kwargs)
 
     def close(self):
         self.state = "FIN-WAIT-1"
@@ -72,20 +76,20 @@ class TCPSocket(object):
         if hasattr(packet, 'load'):
             self.recv_buffer += packet.load
 
-        tcp_flags = packet.sprintf("%TCP.flags%")
+        recv_flags = packet.sprintf("%TCP.flags%")
+        send_flags = ""
 
-        if self.state == "ESTABLISHED" and 'F' in tcp_flags:
-            self._send(flags="F")
+        if self.state == "ESTABLISHED" and 'F' in recv_flags:
+            send_flags = "F"
             self.state = "TIME-WAIT"
-            return
         elif self.state == "SYN-SENT":
             self.seq += 1
             self.state = "ESTABLISHED"
-        elif self.state == "FIN-WAIT-1" and 'F' in tcp_flags:
+        elif self.state == "FIN-WAIT-1" and 'F' in recv_flags:
             self.seq += 1
             self.state = "TIME-WAIT"
 
-        self._send_ack()
+        self._send_ack(flags=send_flags)
 
 
 
