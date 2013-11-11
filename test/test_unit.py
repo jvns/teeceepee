@@ -126,3 +126,5 @@ def test_recv_one_packet():
     # Check that the PUSH/ACK sequence is the same
     check_replay(listener, conn, packet_log[4:7])
 
+    # Check that recv() actually works
+    assert conn.recv() == packet_log[4].payload.payload.payload
