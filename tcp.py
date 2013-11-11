@@ -73,7 +73,9 @@ class TCPSocket(object):
         tcp_flags = packet.sprintf("%TCP.flags%")
 
         if self.state == "ESTABLISHED" and 'F' in tcp_flags:
+            self._send(flags="F")
             self.state = "TIME-WAIT"
+            return
         elif self.state == "SYN-SENT":
             self.seq += 1
             self.state = "ESTABLISHED"
