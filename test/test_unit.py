@@ -49,20 +49,13 @@ def create_session(packet_log):
     return listener, conn
 
 def check_mostly_same(pkt1, pkt2):
-    print repr(pkt1)
-    print repr(pkt2)
-
-    print pkt1.summary()
-    print pkt2.summary()
-
-
     assert pkt1.seq == pkt2.seq
     assert pkt1.ack == pkt2.ack
     assert pkt1.sprintf("%TCP.flags%") == pkt2.sprintf("%TCP.flags%")
     if hasattr(pkt1, 'load'):
         assert pkt1.load == pkt2.load
     else:
-        assert not hasattr(pkt2, 'load')
+        assert (not hasattr(pkt2, 'load')) or (pkt2.load is None)
 
 def test_send_push_ack():
     packet_log = rdpcap("test/inputs/localhost-wget.pcap")
@@ -112,10 +105,6 @@ def check_replay(listener, conn, packet_log):
     for pkt in incoming:
         listener.dispatch(pkt)
 
-    print "Received packets:"
-    for p in listener.received_packets:
-        print p.summary(), "ack:", p.ack
-    print ""
     our_outgoing = listener.received_packets[-len(outgoing):]
     for ours, actual in zip(our_outgoing, outgoing):
         check_mostly_same(ours, actual)

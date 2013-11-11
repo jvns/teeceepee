@@ -17,7 +17,6 @@ class TCPSocket(object):
         self.recv_queue = Queue()
         self.state = "CLOSED"
         self.listener = listener
-        print "Initial sequence: ", self.seq
 
         self.listener.open(src_ip, self.src_port, self)
 
@@ -41,9 +40,13 @@ class TCPSocket(object):
             packet.flags = flags
         else:
             packet.flags = flags + "A"
+        # Add the payload
         packet.load = load
+        # Add the IP header
         full_packet = self.ip_header / packet
+        # Send the packet over the wire
         self.listener.send(full_packet)
+        # Update the sequence number with the number of bytes sent
         if load is not None:
             self.seq += len(load)
 
@@ -59,7 +62,6 @@ class TCPSocket(object):
     def next_seq(packet):
         # really not right.
         if hasattr(packet, 'load'):
-            print "Adding load: ", len(packet.load), "\n"
             return packet.seq + len(packet.load)
         else:
             return packet.seq + 1
@@ -67,9 +69,6 @@ class TCPSocket(object):
     def handle(self, packet):
         # Update our state to indicate that we've received the packet
         self.ack = max(self.next_seq(packet), self.ack)
-
-        print "Handling:",
-        print packet.summary()
 
         tcp_flags = packet.sprintf("%TCP.flags%")
 
