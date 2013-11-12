@@ -44,9 +44,10 @@ class TCPSocket(object):
         return random.randint(0, 100000)
 
     def _send_syn(self):
-        self._send(flags="S")
         self.state = "SYN-SENT"
+        self._send(flags="S")
 
+    # TODO: why am I even using **kwargs here there are no **kwargs.
     def _send(self, **kwargs):
         """Every packet we send should go through here."""
         load = kwargs.pop('load', None)
@@ -57,7 +58,7 @@ class TCPSocket(object):
                      ack=self.last_ack_sent,
                      **kwargs)
         # Always ACK unless it's the first packet
-        if self.state == "CLOSED":
+        if self.state == "SYN-SENT":
             packet.flags = flags
         else:
             packet.flags = flags + "A"
@@ -130,7 +131,8 @@ class TCPSocket(object):
             self.state = "ESTABLISHED"
         elif self.state == "FIN-WAIT-1" and 'F' in recv_flags:
             self.seq += 1
-            self.state = "TIME-WAIT"
+            # We're supposed to go to TIME-WAIT, but we don't. take that.
+            self.state = "CLOSED"
         else:
             raise BadPacketError("Oh no!")
 

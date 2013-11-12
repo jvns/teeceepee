@@ -84,7 +84,7 @@ def test_fin_ack_client():
     our_ack = listener.received_packets[-1]
     check_mostly_same(our_ack, our_ack_log)
 
-    assert conn.state == "TIME-WAIT"
+    assert conn.state == "CLOSED"
 
 
 def test_recv_one_packet():
