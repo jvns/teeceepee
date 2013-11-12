@@ -9,8 +9,12 @@ import os
 
 # The tests can't run as not-root
 RUN = True
-for _ in range(4):
-    send(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR))
+try:
+    for _ in range(4):
+        send(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR))
+except:
+    RUN = False
+    pass
 
 import time
 import tcp
