@@ -2,54 +2,34 @@
 
 FAKE_IP = "10.0.4.4"
 MAC_ADDR = "60:67:20:eb:7b:bc"
-from scapy.all import srp, Ether, ARP
+from scapy.all import send, Ether, ARP
 import sys
 import os
 
+
 # The tests can't run as not-root
-RUN = (os.getuid() == 1)
-
-
-if RUN:
-    for _ in range(4):
-        srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR))
+RUN = True
+for _ in range(4):
+    send(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR))
 
 import time
 import tcp
 from tcp import TCPSocket
+from tcp_listener import TCPListener
 
-def test_handshake():
-    if not RUN: return
-    conn = TCPSocket("example.com", 80, FAKE_IP)
-    assert conn.state == 'SYN-SENT'
-    initial_seq = conn.seq
-    # SYN-ACK should have finished by now
-    time.sleep(3)
-    print "conn.seq", conn.seq, "conn.state", conn.state, "initial_seq", initial_seq
-    assert conn.seq == initial_seq + 1
-    assert conn.state == 'ESTABLISHED'
-
-def test_send_data():
+def test_get_google_homepage():
     if not RUN: return
     google_ip = "173.194.43.39"
     payload = "GET / HTTP/1.0\r\n\r\n"
-    conn = TCPSocket(google_ip, 80, FAKE_IP)
-    orig_seq = conn.seq
-    conn.send(payload)
-    assert conn.state == "ESTABLISHED"
-    assert conn.seq == orig_seq + len(payload) + 1
 
-    data = conn.recv()
-    assert len(data) > 5
+    listener = TCPListener(FAKE_IP)
+    conn = TCPSocket(listener)
 
-def test_open_socket():
-    if not RUN: return
-    conn = TCPSocket("example.com", 80, FAKE_IP)
-    assert (FAKE_IP, conn.src_port) in tcp.listener.open_sockets
-
-def test_teardown():
-    if not RUN: return
-    conn = TCPSocket("example.com", 80, FAKE_IP)
-    conn.close()
-    assert conn.state == 'CLOSED'
+    conn.connect(google_ip, 80)
+    #conn.send(payload)
+    #data = conn.recv()
+    #assert len(data) > 5
+    #print data
+    time.sleep(5)
+    assert False
 

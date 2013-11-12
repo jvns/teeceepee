@@ -7,8 +7,10 @@ class TCPListener(object):
         self.ip_address = ip_address
         self.source_port = random.randint(12345, 50000)
         self.open_sockets = {}
+        self.start_daemon()
 
     def dispatch(self, pkt):
+        print "Dispatching!", pkt.summary()
         if not isinstance(pkt.payload.payload, TCP):
             print "Wrong kind of packet!"
             return
@@ -33,9 +35,9 @@ class TCPListener(object):
     def close(self, ip, port):
         del self.open_sockets[ip, port]
 
-    def listen(self, iface="wlan0"):
+    def listen(self):
         filter_rule = "tcp and ip dst %s" % self.ip_address
-        sniff(filter=filter_rule, iface=iface, prn=self.dispatch, store=0)
+        sniff(filter=filter_rule,  prn=self.dispatch, store=0)
 
     def start_daemon(self):
         t = threading.Thread(target=self.listen)

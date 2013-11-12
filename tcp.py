@@ -7,10 +7,10 @@ class BadPacketError(Exception):
     pass
 
 class TCPSocket(object):
-    def __init__(self, listener, src_ip='127.0.0.1', verbose=0):
+    def __init__(self, listener, verbose=0):
         self.state = "CLOSED"
         self.verbose = verbose
-        self.src_ip = src_ip
+        self.src_ip = listener.ip_address
         self.recv_buffer = ""
         self.listener = listener
         self.seq = self._generate_seq()
@@ -108,7 +108,6 @@ class TCPSocket(object):
 
 
         # Handle all the cases for self.state explicitly
-        print repr(packet.payload.payload)
         if "R" in recv_flags:
             self.state = "CLOSED"
             return
