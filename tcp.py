@@ -102,48 +102,39 @@ class TCPSocket(object):
 
         self.last_ack_sent = max(self.next_seq(packet), self.last_ack_sent)
 
-        if self._has_load(packet):
-            self.recv_buffer += packet.load
-
         recv_flags = packet.sprintf("%TCP.flags%")
-        send_flags = ""
 
         # Handle all the cases for self.state explicitly
-        if "R" in recv_flags:
-            self._close()
-        elif self.state == "LISTEN" and 'S' in recv_flags:
-            send_flags = "S"
-            self.state = "SYN-RECEIVED"
-            self._set_dest(packet.payload.src, packet.sport)
-        elif self.state == "SYN-RECEIVED" and 'A' in recv_flags:
-            self.state = "ESTABLISHED"
-        elif self.state == "ESTABLISHED" and 'F' in recv_flags:
-            self.seq += 1
-            send_flags = "F"
-            self.state = "LAST-ACK"
-        elif self.state == "LAST-ACK" and 'A' in recv_flags:
-            self._close()
-        elif self.state == "ESTABLISHED":
-            pass
-        elif self.state == "SYN-SENT":
-            self.seq += 1
-            self.state = "ESTABLISHED"
-        elif self.state == "FIN-WAIT-1" and 'F' in recv_flags:
-            self.seq += 1
+        if self._has_load(packet):
+            self.recv_buffer += packet.load
             self._send_ack()
-            # We're supposed to go to TIME-WAIT, but we don't. take that.
+        elif "R" in recv_flags:
             self._close()
+        elif "S" in recv_flags:
+            if self.state == "LISTEN":
+                self.state = "SYN-RECEIVED"
+                self._set_dest(packet.payload.src, packet.sport)
+                self._send_ack(flags="S")
+            elif self.state == "SYN-SENT":
+                self.seq += 1
+                self.state = "ESTABLISHED"
+                self._send_ack()
+        elif "F" in recv_flags:
+            if self.state == "ESTABLISHED":
+                self.seq += 1
+                self.state = "LAST-ACK"
+                self._send_ack(flags="F")
+            elif self.state == "FIN-WAIT-1":
+                self.seq += 1
+                self._send_ack()
+                self._close()
+        elif "A" in recv_flags:
+            if self.state == "SYN-RECEIVED":
+                self.state = "ESTABLISHED"
+            elif self.state == "LAST-ACK":
+                self._close()
         else:
             raise BadPacketError("Oh no!")
-
-        if self.state == "CLOSED":
-            return
-        if recv_flags == "A" and not self._has_load(packet):
-            # This is just an ACK. We don't need to ACK the ACK
-            return
-
-        self._send_ack(flags=send_flags)
-
 
     def send(self, payload):
         # Block
