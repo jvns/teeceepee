@@ -28,8 +28,9 @@ def test_connect_google():
     conn = TCPSocket(listener)
 
     conn.connect(google_ip, 80)
-    time.sleep(4)
+    time.sleep(2)
     conn.close()
+    time.sleep(2)
     assert False
 
 def test_get_google_homepage():
