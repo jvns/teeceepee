@@ -10,17 +10,13 @@ class TCPListener(object):
         self.start_daemon()
 
     def dispatch(self, pkt):
-        print "Dispatching!", pkt.summary()
         if not isinstance(pkt.payload.payload, TCP):
-            print "Wrong kind of packet!"
             return
         ip, port = pkt.payload.dst, pkt.dport
         if ip != self.ip_address:
-            print "Not our packet!"
             return
 
         if (ip, port) not in self.open_sockets:
-            print "Dropping packet! Sending reset!", self.open_sockets.keys()
             reset = IP(src=ip, dst=pkt.payload.src) / TCP(seq=pkt.ack, sport=port, dport=pkt.sport, flags="R")
             self.send(reset)
             return
@@ -28,7 +24,6 @@ class TCPListener(object):
         conn.handle(pkt)
 
     def send(self, packet):
-        print "Sending: ", repr(packet)
         send(packet)
 
     def get_port(self):
