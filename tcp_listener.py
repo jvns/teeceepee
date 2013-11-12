@@ -28,6 +28,7 @@ class TCPListener(object):
         conn.handle(pkt)
 
     def send(self, packet):
+        print "Sending: ", repr(packet)
         send(packet)
 
     def get_port(self):

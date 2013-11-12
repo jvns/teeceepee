@@ -43,25 +43,13 @@ class TCPSocket(object):
     def _generate_seq():
         return random.randint(0, 100000)
 
-    def _send_syn(self):
-        self.state = "SYN-SENT"
-        self._send(flags="S")
-
-    # TODO: why am I even using **kwargs here there are no **kwargs.
-    def _send(self, **kwargs):
+    def _send(self, flags="", load=None):
         """Every packet we send should go through here."""
-        load = kwargs.pop('load', None)
-        flags = kwargs.pop('flags', "")
         packet = TCP(dport=self.dest_port,
                      sport=self.src_port,
                      seq=self.seq,
                      ack=self.last_ack_sent,
-                     **kwargs)
-        # Always ACK unless it's the first packet
-        if self.state == "SYN-SENT":
-            packet.flags = flags
-        else:
-            packet.flags = flags + "A"
+                     flags=flags)
         # Add the IP header
         full_packet = self.ip_header / packet
         # Add the payload
@@ -72,13 +60,17 @@ class TCPSocket(object):
         if load is not None:
             self.seq += len(load)
 
-    def _send_ack(self, **kwargs):
+    def _send_syn(self):
+        self.state = "SYN-SENT"
+        self._send(flags="S")
+
+    def _send_ack(self, flags="", load=None):
         """We actually don't need to do much here!"""
-        self._send(**kwargs)
+        self._send(flags=flags + "A", load=load)
 
     def close(self):
         self.state = "FIN-WAIT-1"
-        self._send(flags="F")
+        self._send_ack(flags="F")
 
     @staticmethod
     def next_seq(packet):
@@ -141,7 +133,7 @@ class TCPSocket(object):
         while self.state != "ESTABLISHED":
             time.sleep(0.001)
         # Do the actual send
-        self._send(load=payload, flags="P")
+        self._send_ack(load=payload, flags="P")
 
 
     def recv(self):
