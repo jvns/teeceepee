@@ -192,3 +192,18 @@ def test_bind_handshake():
     assert conn.state == "ESTABLISHED"
     check_mostly_same(listener.received_packets[0], syn_ack)
 
+def test_tiny_session_server():
+    """
+    Test the whole tiny session, from a server POV.
+    """
+    packet_log = rdpcap("test/inputs/tiniest-session.pcap")
+    syn, syn_ack = packet_log[:2]
+
+    listener = MockListener()
+    conn = TCPSocket(listener)
+    conn.seq = syn_ack.seq
+
+    conn.bind(syn.payload.dst, syn.dport)
+
+
+    check_replay(listener, conn, packet_log)
