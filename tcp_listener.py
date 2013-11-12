@@ -1,6 +1,6 @@
 import random
 import threading
-from scapy.all import sniff, TCP, send
+from scapy.all import sniff, TCP, send, IP
 
 class TCPListener(object):
     def __init__(self, ip_address="127.0.0.1"):
@@ -15,8 +15,14 @@ class TCPListener(object):
             print "Wrong kind of packet!"
             return
         ip, port = pkt.payload.dst, pkt.dport
+        if ip != self.ip_address:
+            print "Not our packet!"
+            return
+
         if (ip, port) not in self.open_sockets:
-            print "Dropping packet!", self.open_sockets.keys()
+            print "Dropping packet! Sending reset!", self.open_sockets.keys()
+            reset = IP(src=ip, dst=pkt.payload.src) / TCP(sport=port, dport=pkt.sport, flags="R")
+            self.send(reset)
             return
         conn = self.open_sockets[ip, port]
         conn.handle(pkt)

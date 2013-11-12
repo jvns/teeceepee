@@ -215,7 +215,7 @@ def test_sends_reset():
 
     packet_log = rdpcap("test/inputs/tiniest-session.pcap")
     listener, conn = create_session(packet_log)
-    conn.state = "CLOSED"
+    conn._close()
 
     syn_ack = packet_log[1]
     listener.dispatch(syn_ack)
