@@ -217,11 +217,11 @@ def test_sends_reset():
     listener, conn = create_session(packet_log)
     conn.state = "CLOSED"
 
+    syn_ack = packet_log[1]
     listener.dispatch(syn_ack)
 
     last_packet = listener.received_packets[-1]
-    assert last_packet
-    assert conn.state == "CLOSED"
+    assert last_packet.sprintf("%TCP.flags%") == "R"
 
 
 def create_session(packet_log):
