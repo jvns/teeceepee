@@ -91,10 +91,11 @@ class TCPSocket(object):
         else:
             return packet.seq
 
-    def handle(self, packet):
-        if self.state == "CLOSED":
-            return
+    def _close(self):
+        self.state = "CLOSED"
+        self.listener.close(self.src_ip, self.src_port)
 
+    def handle(self, packet):
         if self.last_ack_sent is not None and self.last_ack_sent != packet.seq:
             # We're not in a place to receive this packet. Drop it.
             return
@@ -107,11 +108,9 @@ class TCPSocket(object):
         recv_flags = packet.sprintf("%TCP.flags%")
         send_flags = ""
 
-
         # Handle all the cases for self.state explicitly
         if "R" in recv_flags:
-            self.state = "CLOSED"
-            return
+            self._close()
         elif self.state == "LISTEN" and 'S' in recv_flags:
             send_flags = "S"
             self.state = "SYN-RECEIVED"
@@ -123,7 +122,7 @@ class TCPSocket(object):
             send_flags = "F"
             self.state = "LAST-ACK"
         elif self.state == "LAST-ACK" and 'A' in recv_flags:
-            self.state = "CLOSED"
+            self._close()
         elif self.state == "ESTABLISHED":
             pass
         elif self.state == "SYN-SENT":
@@ -131,11 +130,14 @@ class TCPSocket(object):
             self.state = "ESTABLISHED"
         elif self.state == "FIN-WAIT-1" and 'F' in recv_flags:
             self.seq += 1
+            self._send_ack()
             # We're supposed to go to TIME-WAIT, but we don't. take that.
-            self.state = "CLOSED"
+            self._close()
         else:
             raise BadPacketError("Oh no!")
 
+        if self.state == "CLOSED":
+            return
         if recv_flags == "A" and not self._has_load(packet):
             # This is just an ACK. We don't need to ACK the ACK
             return
