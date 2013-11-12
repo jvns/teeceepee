@@ -147,7 +147,32 @@ def test_recv_many_packets_in_order():
     conn.send(payload)
 
     check_replay(listener, conn, packet_log[4:], check=False)
-    # Check that the PUSH/ACK sequence is the same
+
+    # Check that the contents of the packet is right
+    recv = conn.recv()
+    assert recv[-36001:-1]  == "1234567890" * 3600
+
+def test_recv_many_packets_out_of_order():
+    packet_log = rdpcap("test/inputs/wget-36000-nums.pcap")
+    listener, conn = create_session(packet_log)
+    _, syn_ack, _, push_ack = packet_log[:4]
+
+    listener.dispatch(syn_ack)
+    payload = str(push_ack.payload.payload.payload)
+    conn.send(payload)
+
+    p1, p2, p3  = packet_log[5], packet_log[7], packet_log[8]
+
+    # Send the packets out of order and repeated
+    listener.dispatch(p2)
+    listener.dispatch(p3)
+    listener.dispatch(p2)
+    listener.dispatch(p1)
+    listener.dispatch(p3)
+    listener.dispatch(p2)
+    listener.dispatch(p3)
+
+    # Check that the contents of the packet is right
     recv = conn.recv()
     assert recv[-36001:-1]  == "1234567890" * 3600
 
