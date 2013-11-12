@@ -112,26 +112,29 @@ class TCPSocket(object):
         if "R" in recv_flags:
             self.state = "CLOSED"
             return
-        elif self.state == "LISTEN" and 'S' in recv_flags:
-            send_flags = "S"
-            self.state = "SYN-RECEIVED"
-            self._set_dest(packet.payload.src, packet.sport)
-        elif self.state == "SYN-RECEIVED" and 'A' in recv_flags:
-            self.state = "ESTABLISHED"
-        elif self.state == "ESTABLISHED" and 'F' in recv_flags:
-            self.seq += 1
-            send_flags = "F"
-            self.state = "LAST-ACK"
-        elif self.state == "LAST-ACK" and 'A' in recv_flags:
-            self.state = "CLOSED"
-        elif self.state == "ESTABLISHED":
-            pass
+        elif "S" in recv_flags:
+            if self.state == "LISTEN":
+                send_flags = "S"
+                self.state = "SYN-RECEIVED"
+                self._set_dest(packet.payload.src, packet.sport)
+        elif "A" in recv_flags:
+            if self.state == "SYN-RECEIVED":
+                self.state = "ESTABLISHED"
+            elif self.state == "LAST-ACK":
+                self.state = "CLOSED"
+        elif "F" in recv_flags:
+            if self.state == "ESTABLISHED":
+                self.seq += 1
+                send_flags = "F"
+                self.state = "LAST-ACK"
+            elif self.state == "FIN-WAIT-1":
+                self.seq += 1
+                self.state = "TIME-WAIT"
+
         elif self.state == "SYN-SENT":
             self.seq += 1
             self.state = "ESTABLISHED"
-        elif self.state == "FIN-WAIT-1" and 'F' in recv_flags:
-            self.seq += 1
-            self.state = "TIME-WAIT"
+
         else:
             raise BadPacketError("Oh no!")
 
