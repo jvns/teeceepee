@@ -25,6 +25,10 @@ class TCPSocket(object):
         self.listener.open(self.src_ip, self.src_port, self)
         self._send_syn()
 
+    def bind(self, host, port):
+        self.src_ip = host
+        self.src_port = port
+        self.state = "LISTEN"
 
     @staticmethod
     def _generate_seq():
