@@ -18,7 +18,7 @@ class TCPSocket(object):
     def connect(self, host, port):
         self.dest_port = port
         self.dest_ip = host
-        self.ack = None
+        self.last_ack_sent = None
         self.seq = self._generate_seq()
         self.ip_header = IP(dst=self.dest_ip, src=self.src_ip)
         self.src_port = self.listener.get_port()
@@ -45,7 +45,7 @@ class TCPSocket(object):
         packet = TCP(dport=self.dest_port,
                      sport=self.src_port,
                      seq=self.seq,
-                     ack=self.ack,
+                     ack=self.last_ack_sent,
                      **kwargs)
         # Always ACK unless it's the first packet
         if self.state == "CLOSED":
@@ -73,14 +73,21 @@ class TCPSocket(object):
     @staticmethod
     def next_seq(packet):
         # really not right.
+        tcp_flags = packet.sprintf("%TCP.flags%")
         if hasattr(packet, 'load'):
             return packet.seq + len(packet.load)
-        else:
+        elif 'S' in tcp_flags or 'F' in tcp_flags:
             return packet.seq + 1
+        else:
+            return packet.seq
 
     def handle(self, packet):
-        # Update our state to indicate that we've received the packet
-        self.ack = max(self.next_seq(packet), self.ack)
+        if self.last_ack_sent is not None and self.last_ack_sent != packet.seq:
+            # We're not in a place to receive this packet. Drop it.
+            return
+
+        self.last_ack_sent = max(self.next_seq(packet), self.last_ack_sent)
+
         if hasattr(packet, 'load'):
             self.recv_buffer += packet.load
 
