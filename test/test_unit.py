@@ -207,3 +207,19 @@ def test_tiny_session_server():
 
 
     check_replay(listener, conn, packet_log)
+
+def test_reset():
+    listener = MockListener()
+
+    packet_log = rdpcap("test/inputs/tiniest-session.pcap")
+    listener, conn = create_session(packet_log)
+    syn_ack = packet_log[1]
+
+    listener.dispatch(syn_ack)
+
+    reset = syn_ack.copy()
+    reset.payload.payload.flags = "R"
+
+    listener.dispatch(reset)
+    assert conn.state == "CLOSED"
+
