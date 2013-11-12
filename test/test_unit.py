@@ -6,7 +6,7 @@ Mocks a listener instead of sending real packets.
 """
 
 from tcp import TCPSocket
-from scapy.all import IP, TCP, Ether, rdpcap
+from scapy.all import IP, TCP, Ether, rdpcap, Padding
 from mock_listener import MockListener
 
 
@@ -267,4 +267,6 @@ def check_replay(listener, conn, packet_log, check=True):
         check_mostly_same(ours, actual)
 
 
-
+def test_has_load():
+    pkt = Ether() / TCP() / IP() / Padding("\x00\x00")
+    assert not TCPSocket._has_load(pkt)

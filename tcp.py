@@ -1,4 +1,4 @@
-from scapy.all import TCP, IP, send
+from scapy.all import TCP, IP, send, Padding
 import random
 from Queue import Queue
 import time
@@ -19,6 +19,8 @@ class TCPSocket(object):
 
     @staticmethod
     def _has_load(packet):
+        if isinstance(packet.payload.payload.payload, Padding):
+            return False
         return hasattr(packet, 'load') and packet.load is not None
 
     def _set_dest(self, host, port):
