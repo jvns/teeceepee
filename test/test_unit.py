@@ -167,10 +167,10 @@ def test_recv_many_packets_out_of_order():
     listener.dispatch(p2)
     listener.dispatch(p3)
     listener.dispatch(p2)
-    listener.dispatch(p1)
+    listener.dispatch(p1) # Right
     listener.dispatch(p3)
-    listener.dispatch(p2)
-    listener.dispatch(p3)
+    listener.dispatch(p2) # Right
+    listener.dispatch(p3) # Right
 
     # Check that the contents of the packet is right
     recv = conn.recv()
