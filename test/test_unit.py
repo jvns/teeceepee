@@ -24,26 +24,16 @@ def test_syn():
 
 def test_handshake_client():
     """When we handshake, we should send a SYN and an ACK"""
-    listener = MockListener()
-    conn = TCPSocket(listener)
-    conn.connect("localhost", 80)
-    initial_seq = conn.seq
+    packet_log = rdpcap("test/inputs/tiniest-session.pcap")
+    listener, conn = create_session(packet_log)
 
-    tcp_packet = TCP(dport=conn.src_port, flags="SA", seq=100, ack=initial_seq + 1)
-    syn_ack = Ether() / IP(dst=conn.src_ip) / tcp_packet
+    syn, syn_ack, ack = packet_log[:3]
     listener.dispatch(syn_ack)
 
-    assert conn.seq == initial_seq + 1
-    assert conn.state == "ESTABLISHED"
-
-    # We should have sent exactly two packets
     # Check that they look okay
-    pkts = listener.received_packets
-    assert len(pkts) == 2
-    syn, ack = pkts
-    assert ack.seq == syn.seq + 1
-    assert syn.sprintf("%TCP.flags%") == "S"
-    assert ack.sprintf("%TCP.flags%") == "A"
+    our_syn, our_ack = listener.received_packets
+    check_mostly_same(syn, our_syn)
+    check_mostly_same(ack, our_ack)
 
 
 def test_send_push_ack():
