@@ -14,13 +14,20 @@ class TCPSocket(object):
         self.recv_buffer = ""
         self.listener = listener
         self.seq = self._generate_seq()
+        self.last_ack_sent = None
 
 
-    def connect(self, host, port):
+    @staticmethod
+    def _has_load(packet):
+        return hasattr(packet, 'load') and packet.load is not None
+
+    def _set_dest(self, host, port):
         self.dest_port = port
         self.dest_ip = host
-        self.last_ack_sent = None
         self.ip_header = IP(dst=self.dest_ip, src=self.src_ip)
+
+    def connect(self, host, port):
+        self._set_dest(host, port)
         self.src_port = self.listener.get_port()
         self.listener.open(self.src_ip, self.src_port, self)
         self._send_syn()
@@ -76,7 +83,7 @@ class TCPSocket(object):
     def next_seq(packet):
         # really not right.
         tcp_flags = packet.sprintf("%TCP.flags%")
-        if hasattr(packet, 'load'):
+        if TCPSocket._has_load(packet):
             return packet.seq + len(packet.load)
         elif 'S' in tcp_flags or 'F' in tcp_flags:
             return packet.seq + 1
@@ -90,14 +97,21 @@ class TCPSocket(object):
 
         self.last_ack_sent = max(self.next_seq(packet), self.last_ack_sent)
 
-        if hasattr(packet, 'load'):
+        if self._has_load(packet):
             self.recv_buffer += packet.load
 
         recv_flags = packet.sprintf("%TCP.flags%")
         send_flags = ""
 
+
         # Handle all the cases for self.state explicitly
-        if self.state == "ESTABLISHED" and 'F' in recv_flags:
+        if self.state == "LISTEN" and 'S' in recv_flags:
+            send_flags = "S"
+            self.state = "SYN-RECEIVED"
+            self._set_dest(packet.payload.src, packet.sport)
+        elif self.state == "SYN-RECEIVED" and 'A' in recv_flags:
+            self.state = "ESTABLISHED"
+        elif self.state == "ESTABLISHED" and 'F' in recv_flags:
             send_flags = "F"
             self.state = "TIME-WAIT"
         elif self.state == "ESTABLISHED":
@@ -111,8 +125,11 @@ class TCPSocket(object):
         else:
             raise BadPacketError("Oh no!")
 
-        self._send_ack(flags=send_flags)
+        if recv_flags == "A" and not self._has_load(packet):
+            # This is just an ACK. We don't need to ACK the ACK
+            return
 
+        self._send_ack(flags=send_flags)
 
 
     def send(self, payload):
@@ -121,6 +138,7 @@ class TCPSocket(object):
             time.sleep(0.001)
         # Do the actual send
         self._send(load=payload, flags="P")
+
 
     def recv(self):
         recv = self.recv_buffer
