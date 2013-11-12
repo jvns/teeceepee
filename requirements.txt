@@ -1,1 +1,1 @@
-scapy==2.1.1-dev
+scapy==2.2.0-dev
