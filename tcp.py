@@ -13,21 +13,23 @@ class TCPSocket(object):
         self.src_ip = src_ip
         self.recv_buffer = ""
         self.listener = listener
+        self.seq = self._generate_seq()
 
 
     def connect(self, host, port):
         self.dest_port = port
         self.dest_ip = host
         self.last_ack_sent = None
-        self.seq = self._generate_seq()
         self.ip_header = IP(dst=self.dest_ip, src=self.src_ip)
         self.src_port = self.listener.get_port()
         self.listener.open(self.src_ip, self.src_port, self)
         self._send_syn()
 
     def bind(self, host, port):
+        # Right now, listen for only one connection.
         self.src_ip = host
         self.src_port = port
+        self.listener.open(self.src_ip, self.src_port, self)
         self.state = "LISTEN"
 
     @staticmethod

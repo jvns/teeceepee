@@ -176,3 +176,19 @@ def test_recv_many_packets_out_of_order():
     recv = conn.recv()
     assert recv[-36001:-1]  == "1234567890" * 3600
 
+def test_bind_handshake():
+    packet_log = rdpcap("test/inputs/tiniest-session.pcap")
+    syn, syn_ack, ack, client_fin_ack, server_fin_ack, client_ack = packet_log
+
+    listener = MockListener()
+    conn = TCPSocket(listener)
+    conn.seq = syn_ack.seq
+    conn.bind(syn.payload.dst, syn.dport)
+
+    listener.dispatch(syn)
+    listener.dispatch(ack)
+
+    assert len(listener.received_packets) == 1
+    assert conn.state == "ESTABLISHED"
+    check_mostly_same(listener.received_packets[0], syn_ack)
+
