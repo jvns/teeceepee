@@ -137,8 +137,8 @@ def test_recv_one_packet():
     # Check that recv() actually works
     assert conn.recv() == str(packet_log[5].payload.payload.payload)
 
-def test_recv_many_packets():
-    packet_log = rdpcap("test/inputs/wget-36000-as.pcap")
+def test_recv_many_packets_in_order():
+    packet_log = rdpcap("test/inputs/wget-36000-nums.pcap")
     listener, conn = create_session(packet_log)
     _, syn_ack, _, push_ack = packet_log[:4]
 
@@ -149,5 +149,5 @@ def test_recv_many_packets():
     check_replay(listener, conn, packet_log[4:], check=False)
     # Check that the PUSH/ACK sequence is the same
     recv = conn.recv()
-    assert recv[-36001:-1]  == "a" * 36000
+    assert recv[-36001:-1]  == "1234567890" * 3600
 
