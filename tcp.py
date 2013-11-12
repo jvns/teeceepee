@@ -91,6 +91,9 @@ class TCPSocket(object):
             return packet.seq
 
     def handle(self, packet):
+        if self.state == "CLOSED":
+            return
+
         if self.last_ack_sent is not None and self.last_ack_sent != packet.seq:
             # We're not in a place to receive this packet. Drop it.
             return
@@ -105,7 +108,11 @@ class TCPSocket(object):
 
 
         # Handle all the cases for self.state explicitly
-        if self.state == "LISTEN" and 'S' in recv_flags:
+        print repr(packet.payload.payload)
+        if "R" in recv_flags:
+            self.state = "CLOSED"
+            return
+        elif self.state == "LISTEN" and 'S' in recv_flags:
             send_flags = "S"
             self.state = "SYN-RECEIVED"
             self._set_dest(packet.payload.src, packet.sport)

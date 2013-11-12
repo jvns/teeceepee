@@ -219,7 +219,8 @@ def test_reset():
 
     reset = syn_ack.copy()
     reset.payload.payload.flags = "R"
-
+    reset.seq += 1
     listener.dispatch(reset)
+
     assert conn.state == "CLOSED"
 
