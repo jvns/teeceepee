@@ -112,8 +112,11 @@ class TCPSocket(object):
         elif self.state == "SYN-RECEIVED" and 'A' in recv_flags:
             self.state = "ESTABLISHED"
         elif self.state == "ESTABLISHED" and 'F' in recv_flags:
+            self.seq += 1
             send_flags = "F"
-            self.state = "TIME-WAIT"
+            self.state = "LAST-ACK"
+        elif self.state == "LAST-ACK" and 'A' in recv_flags:
+            self.state = "CLOSED"
         elif self.state == "ESTABLISHED":
             pass
         elif self.state == "SYN-SENT":
