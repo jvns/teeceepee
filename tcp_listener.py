@@ -21,7 +21,7 @@ class TCPListener(object):
 
         if (ip, port) not in self.open_sockets:
             print "Dropping packet! Sending reset!", self.open_sockets.keys()
-            reset = IP(src=ip, dst=pkt.payload.src) / TCP(sport=port, dport=pkt.sport, flags="R")
+            reset = IP(src=ip, dst=pkt.payload.src) / TCP(seq=pkt.ack, sport=port, dport=pkt.sport, flags="R")
             self.send(reset)
             return
         conn = self.open_sockets[ip, port]

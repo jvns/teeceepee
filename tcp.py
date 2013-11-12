@@ -14,7 +14,7 @@ class TCPSocket(object):
         self.recv_buffer = ""
         self.listener = listener
         self.seq = self._generate_seq()
-        self.last_ack_sent = None
+        self.last_ack_sent = 0
 
 
     @staticmethod
@@ -96,7 +96,7 @@ class TCPSocket(object):
         self.listener.close(self.src_ip, self.src_port)
 
     def handle(self, packet):
-        if self.last_ack_sent is not None and self.last_ack_sent != packet.seq:
+        if self.last_ack_sent and self.last_ack_sent != packet.seq:
             # We're not in a place to receive this packet. Drop it.
             return
 
