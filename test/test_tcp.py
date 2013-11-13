@@ -5,7 +5,7 @@ MAC_ADDR = "60:67:20:eb:7b:bc"
 from scapy.all import send, Ether, ARP
 import sys
 import os
-
+from unittest.case import SkipTest
 
 # The tests can't run as not-root
 RUN = True
@@ -23,7 +23,7 @@ from tcp_listener import TCPListener
 google_ip = "173.194.43.39"
 
 def test_connect_google():
-    if not RUN: return
+    if not RUN: raise SkipTest
     listener = TCPListener(FAKE_IP)
     conn = TCPSocket(listener)
 
@@ -34,7 +34,7 @@ def test_connect_google():
     assert False
 
 def test_get_google_homepage():
-    if not RUN: return
+    if not RUN: raise SkipTest
     payload = "GET / HTTP/1.0\r\n\r\n"
 
     listener = TCPListener(FAKE_IP)
