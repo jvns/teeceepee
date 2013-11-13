@@ -78,6 +78,8 @@ class TCPSocket(object):
         self._send(flags=flags + "A", load=load)
 
     def close(self):
+        if self.state == "CLOSED":
+            return
         self.state = "FIN-WAIT-1"
         self._send_ack(flags="F")
 

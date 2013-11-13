@@ -43,7 +43,6 @@ def test_get_google_homepage():
     conn = LoggingTCPSocket(listener)
 
     conn.connect(google_ip, 80)
-    time.sleep(2)
     conn.send(payload)
     time.sleep(3)
     data = conn.recv()
@@ -55,7 +54,8 @@ def test_get_google_homepage():
     assert len(conn.received_packets) >= 4
     packet_flags = [p.sprintf("%TCP.flags%") for p in conn.received_packets]
     assert packet_flags[0] == "SA"
-    assert packet_flags[-1] == "FA"
+    assert "F" in packet_flags[-2]
+    assert packet_flags[-1] == "A"
     assert "PA" in packet_flags
-    assert "A" in packet_flags
-    assert conn.states == ["CLOSED", "SYN-SENT", "ESTABLISHED", "FIN-WAIT-1", "CLOSED"]
+
+    assert conn.states == ["CLOSED", "SYN-SENT", "ESTABLISHED", "LAST-ACK", "CLOSED"]
