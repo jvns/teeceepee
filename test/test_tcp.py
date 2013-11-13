@@ -39,7 +39,7 @@ def test_connect_google():
 
 def test_get_google_homepage():
     if not RUN: raise SkipTest
-    payload = "GET / HTTP/1.0\r\n\r\n"
+    payload = "GET / HTTP/1.0\r\nHost: %s\r\n\r\n" % google_ip
     conn = LoggingTCPSocket(listener)
 
     conn.connect(google_ip, 80)

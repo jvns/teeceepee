@@ -6,6 +6,11 @@ import time
 class BadPacketError(Exception):
     pass
 
+def get_payload(packet):
+    while not isinstance(packet, TCP):
+        packet = packet.payload
+    return packet.payload
+
 class TCPSocket(object):
     def __init__(self, listener, verbose=0):
         self.state = "CLOSED"
@@ -19,9 +24,10 @@ class TCPSocket(object):
 
     @staticmethod
     def _has_load(packet):
-        if isinstance(packet.payload.payload.payload, Padding):
+        payload = get_payload(packet)
+        if isinstance(payload, Padding):
             return False
-        return hasattr(packet, 'load') and packet.load is not None
+        return bool(payload)
 
     def _set_dest(self, host, port):
         self.dest_port = port

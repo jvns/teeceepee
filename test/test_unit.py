@@ -5,7 +5,7 @@ Mocks a listener instead of sending real packets.
 
 """
 
-from tcp import TCPSocket
+from tcp import TCPSocket, get_payload
 from scapy.all import IP, TCP, Ether, rdpcap, Padding
 from mock_listener import MockListener
 
@@ -49,10 +49,10 @@ def test_send_push_ack():
     assert conn.state == "ESTABLISHED"
 
     # Extract the payload (3 levels down: Ether, IP, TCP)
-    payload = str(push_ack.payload.payload.payload)
+    payload = get_payload(push_ack)
     conn.send(payload)
 
-    # Check to make sure the PUSH-ACK packet packet that gets sent looks good
+    # Check to make sure the PUSH-ACK packet that gets sent looks good
     our_push_ack = listener.received_packets[-1]
     check_mostly_same(our_push_ack, push_ack)
 
@@ -88,7 +88,7 @@ def test_recv_one_packet():
     _, syn_ack, _, push_ack = packet_log[:4]
 
     listener.dispatch(syn_ack)
-    payload = str(push_ack.payload.payload.payload)
+    payload = get_payload(push_ack)
     conn.send(payload)
 
     # Check that the PUSH/ACK sequence is the same
@@ -106,7 +106,7 @@ def test_recv_many_packets_in_order():
     _, syn_ack, _, push_ack = packet_log[:4]
 
     listener.dispatch(syn_ack)
-    payload = str(push_ack.payload.payload.payload)
+    payload = get_payload(push_ack)
     conn.send(payload)
 
     check_replay(listener, conn, packet_log[4:], check=False)
@@ -125,7 +125,7 @@ def test_recv_many_packets_out_of_order():
     _, syn_ack, _, push_ack = packet_log[:4]
 
     listener.dispatch(syn_ack)
-    payload = str(push_ack.payload.payload.payload)
+    payload = get_payload(push_ack)
     conn.send(payload)
 
     p1, p2, p3  = packet_log[5], packet_log[7], packet_log[8]
@@ -238,11 +238,7 @@ def check_mostly_same(pkt1, pkt2):
     assert pkt1.seq == pkt2.seq
     assert pkt1.ack == pkt2.ack
     assert pkt1.sprintf("%TCP.flags%") == pkt2.sprintf("%TCP.flags%")
-    if not hasattr(pkt1, 'load'):
-        pkt1.load = None
-    if not hasattr(pkt2, 'load'):
-        pkt2.load = None
-    assert pkt1.load == pkt2.load
+    assert get_payload(pkt1) == get_payload(pkt2)
 
 
 def check_replay(listener, conn, packet_log, check=True):
@@ -268,5 +264,5 @@ def check_replay(listener, conn, packet_log, check=True):
 
 
 def test_has_load():
-    pkt = Ether() / TCP() / IP() / Padding("\x00\x00")
+    pkt = Ether() / IP() / TCP() / Padding("\x00\x00")
     assert not TCPSocket._has_load(pkt)
