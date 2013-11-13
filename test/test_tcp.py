@@ -41,10 +41,9 @@ def test_get_google_homepage():
     conn = TCPSocket(listener)
 
     conn.connect(google_ip, 80)
-    #conn.send(payload)
-    #data = conn.recv()
-    #assert len(data) > 5
-    #print data
-    time.sleep(5)
-    assert False
+    time.sleep(2)
+    conn.send(payload)
+    time.sleep(3)
+    conn.close()
+    time.sleep(3)
 
