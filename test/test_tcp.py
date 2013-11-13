@@ -15,7 +15,7 @@ from tcp_listener import TCPListener
 RUN = True
 try:
     for _ in range(4):
-        send(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR))
+        srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR), verbose=0, timeout=1)
 except:
     RUN = False
 
