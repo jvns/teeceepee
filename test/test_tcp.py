@@ -46,9 +46,16 @@ def test_get_google_homepage():
     time.sleep(2)
     conn.send(payload)
     time.sleep(3)
+    data = conn.recv()
     conn.close()
     time.sleep(3)
 
-    data = conn.recv()
     assert "google" in data
-
+    assert conn.state == "CLOSED"
+    assert len(conn.received_packets) >= 4
+    packet_flags = [p.sprintf("%TCP.flags%") for p in conn.received_packets]
+    assert packet_flags[0] == "SA"
+    assert packet_flags[-1] == "FA"
+    assert "PA" in packet_flags
+    assert "A" in packet_flags
+    assert conn.states == ["CLOSED", "SYN-SENT", "ESTABLISHED", "FIN-WAIT-1", "CLOSED"]
