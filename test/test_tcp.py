@@ -2,26 +2,29 @@
 
 FAKE_IP = "10.0.4.4"
 MAC_ADDR = "60:67:20:eb:7b:bc"
-from scapy.all import send, Ether, ARP
+from scapy.all import srp, Ether, ARP
 import sys
 import os
 from unittest.case import SkipTest
 from logging_tcp_socket import LoggingTCPSocket
 import time
 import tcp
+import socket
 from tcp_listener import TCPListener
 
 # The tests can't run as not-root
 RUN = True
 try:
     for _ in range(4):
-        srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR), verbose=0, timeout=1)
-except:
+        srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR), verbose=0)
+except socket.error:
     RUN = False
 
 
 google_ip = "173.194.43.39"
-listener = TCPListener(FAKE_IP)
+
+if RUN:
+    listener = TCPListener(FAKE_IP)
 
 def test_connect_google():
     if not RUN: raise SkipTest
