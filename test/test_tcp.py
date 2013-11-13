@@ -17,14 +17,13 @@ RUN = True
 try:
     for _ in range(4):
         srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=FAKE_IP, hwsrc=MAC_ADDR), verbose=0)
+    listener = TCPListener(FAKE_IP)
 except socket.error:
+    # Are you sure you're running as root?
     RUN = False
 
 
 google_ip = "173.194.43.39"
-
-if RUN:
-    listener = TCPListener(FAKE_IP)
 
 def test_connect_google():
     if not RUN: raise SkipTest
