@@ -6,6 +6,10 @@ from scapy.all import send, Ether, ARP
 import sys
 import os
 from unittest.case import SkipTest
+from logging_tcp_socket import LoggingTCPSocket
+import time
+import tcp
+from tcp_listener import TCPListener
 
 # The tests can't run as not-root
 RUN = True
@@ -15,30 +19,26 @@ try:
 except:
     RUN = False
 
-import time
-import tcp
-from tcp import TCPSocket
-from tcp_listener import TCPListener
 
 google_ip = "173.194.43.39"
+listener = TCPListener(FAKE_IP)
 
 def test_connect_google():
     if not RUN: raise SkipTest
-    listener = TCPListener(FAKE_IP)
-    conn = TCPSocket(listener)
+    conn = LoggingTCPSocket(listener)
 
     conn.connect(google_ip, 80)
     time.sleep(2)
     conn.close()
     time.sleep(2)
-    assert False
+    assert conn.state == "CLOSED"
+    assert len(conn.received_packets) == 2
+    assert conn.states == ["CLOSED", "SYN-SENT", "ESTABLISHED", "FIN-WAIT-1", "CLOSED"]
 
 def test_get_google_homepage():
     if not RUN: raise SkipTest
     payload = "GET / HTTP/1.0\r\n\r\n"
-
-    listener = TCPListener(FAKE_IP)
-    conn = TCPSocket(listener)
+    conn = LoggingTCPSocket(listener)
 
     conn.connect(google_ip, 80)
     time.sleep(2)
@@ -46,4 +46,7 @@ def test_get_google_homepage():
     time.sleep(3)
     conn.close()
     time.sleep(3)
+
+    data = conn.recv()
+    assert "google" in data
 
