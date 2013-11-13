@@ -61,7 +61,8 @@ class TCPSocket(object):
         # Add the IP header
         full_packet = self.ip_header / packet
         # Add the payload
-        full_packet.load = load
+        if load:
+            full_packet = full_packet / load
         # Send the packet over the wire
         self.listener.send(full_packet)
         # Update the sequence number with the number of bytes sent
