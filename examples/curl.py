@@ -16,7 +16,7 @@ from teeceepee.tcp_listener import TCPListener
 
 def arp_spoof(fake_ip, mac_address):
     try:
-        for _ in xrange(20):
+        for _ in xrange(5):
             srp(Ether(dst="ff:ff:ff:ff:ff:ff")/ARP(psrc=fake_ip, hwsrc=mac_address), verbose=0, timeout=0.05)
             time.sleep(0.05)
     except socket.error:
@@ -49,10 +49,8 @@ def get_page(url, fake_ip):
 
     conn.connect(hostname, 80)
     conn.send(request)
-    time.sleep(5)
-    data = conn.recv()
+    data = conn.recv(10000)
     conn.close()
-    time.sleep(1)
     return data
 
 def get_mac_address(ifname):

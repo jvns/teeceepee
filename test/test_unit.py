@@ -95,7 +95,8 @@ def test_recv_one_packet():
     check_replay(listener, conn, packet_log[4:7])
 
     # Check that recv() actually works
-    assert conn.recv() == str(packet_log[5].payload.payload.payload)
+    conn.state = "CLOSED"
+    assert conn.recv(1000) == str(packet_log[5].payload.payload.payload)
 
 def test_recv_many_packets_in_order():
     """
@@ -112,7 +113,8 @@ def test_recv_many_packets_in_order():
     check_replay(listener, conn, packet_log[4:], check=False)
 
     # Check that the contents of the packet is right
-    recv = conn.recv()
+    conn.state = "CLOSED"
+    recv = conn.recv(40000)
     assert recv[-36001:-1]  == "1234567890" * 3600
 
 def test_recv_many_packets_out_of_order():
@@ -142,7 +144,8 @@ def test_recv_many_packets_out_of_order():
     # Check that the contents of the packet is right
     # This is a good test because one of the packets starts with a 6 or
     # something
-    recv = conn.recv()
+    conn.state = "CLOSED"
+    recv = conn.recv(38000)
     assert recv[-36001:-1]  == "1234567890" * 3600
 
 def test_bind_handshake():
