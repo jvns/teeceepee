@@ -1,4 +1,4 @@
-from tcp import TCPSocket
+from teeceepee.tcp import TCPSocket
 
 class LoggingTCPSocket(TCPSocket):
     def __init__(self, listener, verbose=0):

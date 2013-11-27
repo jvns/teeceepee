@@ -1,6 +1,6 @@
 """ Mock listener for testing. """
 
-from tcp_listener import TCPListener
+from teeceepee.tcp_listener import TCPListener
 
 
 class MockListener(TCPListener):

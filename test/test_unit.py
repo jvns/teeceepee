@@ -5,7 +5,7 @@ Mocks a listener instead of sending real packets.
 
 """
 
-from tcp import TCPSocket, get_payload
+from teeceepee.tcp import TCPSocket, get_payload
 from scapy.all import IP, TCP, Ether, rdpcap, Padding
 from mock_listener import MockListener
 

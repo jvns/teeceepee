@@ -8,9 +8,9 @@ import os
 from unittest.case import SkipTest
 from logging_tcp_socket import LoggingTCPSocket
 import time
-import tcp
+from teeceepee import tcp
 import socket
-from tcp_listener import TCPListener
+from teeceepee.tcp_listener import TCPListener
 
 # The tests can't run as not-root
 RUN = True
