@@ -49,7 +49,7 @@ def get_page(url, fake_ip):
 
     conn.connect(hostname, 80)
     conn.send(request)
-    data = conn.recv(10000)
+    data = conn.recv(10000, timeout=1)
     conn.close()
     return data
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     MAC_ADDR = get_mac_address("wlan0")
     arp_spoof(FAKE_IP, MAC_ADDR)
     if len(sys.argv) != 2:
-        print "Usage: sudo python wget.py some-site.com"
+        print "Usage: sudo python wget.py example.com"
         sys.exit(1)
     contents = get_page(sys.argv[1], FAKE_IP)
     print contents

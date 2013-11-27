@@ -147,11 +147,14 @@ class TCPSocket(object):
         self._send_ack(load=payload, flags="P")
 
 
-    def recv(self, size):
+    def recv(self, size, timeout=None):
+        start_time = time.time()
         # Block until the connection is closed
         while len(self.recv_buffer) < size:
             time.sleep(0.001)
-            if self.state == "CLOSED":
+            if self.state in ["CLOSED", "LAST-ACK"]:
+                break
+            if timeout < (time.time() - start_time):
                 break
         recv = self.recv_buffer[:size]
         self.recv_buffer = self.recv_buffer[size:]
