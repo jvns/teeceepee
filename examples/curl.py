@@ -1,3 +1,4 @@
+# WARNING: This does not work yet
 import sys
 import socket
 from scapy.all import srp, Ether, ARP
@@ -36,6 +37,7 @@ def get_page(hostname):
     return data
 
 if __name__ == "__main__":
+    print "This program is not working yet =(\n"
     if len(sys.argv) != 2:
         print "Usage: sudo python wget.py some-site.com"
         sys.exit(1)
