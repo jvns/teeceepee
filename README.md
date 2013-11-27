@@ -21,9 +21,9 @@ it just Not Working. Running it a few times sometimes fixes this
 problem.
 
 ```
-sudo python examples/curl.py example.com
+sudo python examples/curl.py 10.0.4.4 example.com
 ```
 
-works for me.
+works for me. If it doesn't work for you, let me know!
 
 It needs to run as root because it needs to use raw sockets.

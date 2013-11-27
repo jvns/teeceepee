@@ -58,18 +58,27 @@ def get_mac_address(ifname):
     info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
     return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
+
+def print_usage():
+    print """USAGE: sudo python wget.py 192.168.4.4 example.com [interface]
+
+The IP address you specify should be
+- on the same subnet as you and
+- not used by anybody else on your network
+- not your real IP address
+
+The default interface is wlan0"""
+    sys.exit()
+    
 if __name__ == "__main__":
-    # If your local IP address is something like
-    # 192.168.0.1 - choose 192.168.4.4 or something
-    # 10.0.1.1 - choose 10.0.4.4 or something
-    # The IP address you choose should be one that nobody else has!
-    # Be careful.
-    FAKE_IP = "10.0.4.4" 
     # You need to specify your interface here
-    MAC_ADDR = get_mac_address("wlan0")
+    if len(sys.argv) < 3:
+        print_usage()
+    interface = "wlan0"
+    if len(sys.argv) == 4:
+        interface = sys.argv[4]
+    FAKE_IP, page = sys.argv[1:3]
+    MAC_ADDR = get_mac_address(interface)
     arp_spoof(FAKE_IP, MAC_ADDR)
-    if len(sys.argv) != 2:
-        print "Usage: sudo python wget.py example.com"
-        sys.exit(1)
-    contents = get_page(sys.argv[1], FAKE_IP)
+    contents = get_page(page, FAKE_IP)
     print contents
