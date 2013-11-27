@@ -23,8 +23,8 @@ class TCPListener(object):
         conn = self.open_sockets[ip, port]
         conn.handle(pkt)
 
-    def send(self, packet):
-        send(packet)
+    def send(self, packet, verbose=0):
+        send(packet, verbose=verbose)
 
     def get_port(self):
         # We need to return a new port number to each new connection
