@@ -53,6 +53,8 @@ interface as well.
   listen on a fake IP address and send gratuitous ARPs to the router.
   This is why `curl.py` needs your network interface and a fake IP
   address.
-* It's slow, because Python.
+* It's slow, because Python. If you watch it in Wireshark, it does a
+  hilarious thing where it gets backed up sending ACKs and then sends
+  a load of ACKs at the end and takes forever to close the connection.
 * Sometimes the ARP spoofing or sniffing doesn't quite work. Usually
   if I run it 5 times it will work.
