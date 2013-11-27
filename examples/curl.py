@@ -21,9 +21,8 @@ def arp_spoof(fake_ip, mac_address):
             time.sleep(0.05)
     except socket.error:
         # Are you sure you're running as root?
-        print ""
         print "ERROR: You need to run this script as root."
-        sys.exit(1)
+        sys.exit()
 
 def parse(url):
     """
@@ -67,7 +66,9 @@ The IP address you specify should be
 - not used by anybody else on your network
 - not your real IP address
 
-The default interface is wlan0"""
+The default interface is wlan0
+
+If it doesn't work, sometimes trying a few extra times helps"""
     sys.exit()
     
 if __name__ == "__main__":
