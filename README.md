@@ -27,6 +27,9 @@ works for me. If it doesn't work for you, let me know! If you're not
 connected to the internet on `wlan0`, you'll need to specify an
 interface as well.
 
+I use Linux and Python 2.7 and it works for me. I would expect it to
+not work on a BSD, and certainly not on Windows.
+
 ### Features
 
 * Can connect to hosts, send packets, and reassemble the replies in
