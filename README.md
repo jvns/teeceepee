@@ -1,4 +1,4 @@
-![Build Status](https://travis-ci.org/jvns/teeceepee.png)
+[![Build Status](https://travis-ci.org/jvns/teeceepee.png)](https://travis-ci.org/jvns/teeceepee)
 
 teeceepee
 =========
