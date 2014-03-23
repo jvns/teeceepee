@@ -59,7 +59,7 @@ def get_mac_address(ifname):
 
 
 def print_usage():
-    print """USAGE: sudo python wget.py 192.168.4.4 example.com [interface]
+    print """USAGE: sudo python curl.py 192.168.4.4 example.com [interface]
 
 The IP address you specify should be
 - on the same subnet as you and
