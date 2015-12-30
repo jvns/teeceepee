@@ -1,6 +1,5 @@
-from scapy.all import TCP, IP, send, Padding
+from scapy.all import TCP, IP, Padding
 import random
-from Queue import Queue
 import time
 
 class BadPacketError(Exception):

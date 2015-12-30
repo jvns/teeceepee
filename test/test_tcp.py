@@ -3,12 +3,9 @@
 FAKE_IP = "10.0.4.4"
 MAC_ADDR = "60:67:20:eb:7b:bc"
 from scapy.all import srp, Ether, ARP
-import sys
-import os
 from unittest.case import SkipTest
 from logging_tcp_socket import LoggingTCPSocket
 import time
-from teeceepee import tcp
 import socket
 from teeceepee.tcp_listener import TCPListener
 
